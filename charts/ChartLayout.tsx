@@ -67,8 +67,7 @@ export class ChartLayoutView extends React.Component<{ layout: ChartLayout, chil
             fontFamily: "Lato, 'Helvetica Neue', Helvetica, Arial, sans-serif",
             fontSize: this.props.layout.props.chart.baseFontSize,
             backgroundColor: "white",
-            textRendering: "optimizeLegibility",
-            WebkitFontSmoothing: "antialiased"
+            textRendering: "optimizeLegibility"
         }
     }
 
