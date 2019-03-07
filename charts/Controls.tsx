@@ -319,7 +319,7 @@ export class Controls {
         let numLines = 1
         if (this.hasTimeline) numLines += 1
         if (this.hasInlineControls) numLines += 1
-        if (this.hasSpace && numLines > 1) numLines -= 1
+        if (this.hasSpace && numLines > 1 && this.hasInlineControls) numLines -= 1
         return numLines
     }
 
@@ -431,7 +431,7 @@ export class ControlsFooterView extends React.Component<{ controls: Controls }> 
         </div>
 
         return <div className="ControlsFooter" style={{ height: props.controls.footerHeight }}>
-            {hasTimeline && (hasInlineControls || !hasSpace) && <div className="footerRowSingle">
+            {hasTimeline && <div className="footerRowSingle">
                 {timeline}
             </div>}
             {hasInlineControls && !hasSpace && <div className="footerRowSingle">
@@ -439,7 +439,7 @@ export class ControlsFooterView extends React.Component<{ controls: Controls }> 
             </div>}
             {hasSpace && <div className="footerRowMulti">
                 <div>
-                    {hasInlineControls ? extraControls : timeline}
+                    {hasInlineControls ? extraControls : undefined}
                 </div>
                 {tabs}
             </div>}
