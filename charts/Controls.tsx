@@ -434,16 +434,16 @@ export class ControlsFooterView extends React.Component<{ controls: Controls }> 
             {hasTimeline && <div className="footerRowSingle">
                 {timeline}
             </div>}
-            {hasInlineControls && !hasSpace && <div className="footerRowSingle">
+            {hasInlineControls && !hasSpace && <div className="footerRowSingle initiallyHide">
                 {extraControls}
             </div>}
-            {hasSpace && <div className="footerRowMulti">
+            {hasSpace && <div className="footerRowMulti initiallyHide">
                 <div>
                     {hasInlineControls ? extraControls : undefined}
                 </div>
                 {tabs}
             </div>}
-            {!hasSpace && <div className="footerRowSingle">
+            {!hasSpace && <div className="footerRowSingle initiallyHide">
                 {tabs}
             </div>}
             {isShareMenuActive && <ShareMenu chartView={chartView} chart={chart} onDismiss={this.onShareMenu} />}

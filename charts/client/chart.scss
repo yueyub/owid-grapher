@@ -64,8 +64,14 @@ figure[data-grapher-src]:empty:after {
     overflow: hidden;
 
     border-radius: 2px;
-    box-shadow: rgba(0, 0, 0, 0.117647) 0px 0px 2px 0px, rgba(0, 0, 0, 0.239216) 0px 2px 2px 0px;
     z-index: $zindex-chart;
+    box-shadow: none;
+    transition: box-shadow 1s ease;
+
+    &:hover {
+        transition: box-shadow 250ms ease;
+        box-shadow: rgba(0, 0, 0, 0.117647) 0px 0px 2px 0px, rgba(0, 0, 0, 0.239216) 0px 2px 2px 0px;
+    }
 
     * {
         box-sizing: border-box;
@@ -291,6 +297,17 @@ figure[data-grapher-src]:empty:after {
         nav.tabs li.active > a {
             border-bottom-color: rgba(0,33,71,.9);
         }
+    }
+
+    .initiallyHide {
+        opacity: 0;
+        transition: opacity 1s ease;
+    }
+
+    &:hover .initiallyHide,
+    .is-touch .initiallyHide {
+        transition: opacity 250ms ease;
+        opacity: 1;
     }
 
     /* The little loading icon on the download tab */
