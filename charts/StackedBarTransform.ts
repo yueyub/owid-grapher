@@ -23,8 +23,8 @@ export class StackedBarTransform implements IChartTransform {
     }
 
     @computed get failMessage(): string | undefined {
-        const { filledDimensions } = this.chart.data
-        if (!some(filledDimensions, d => d.property === 'y'))
+        const { dimensionsWithData } = this.chart.data
+        if (!some(dimensionsWithData, d => d.property === 'y'))
             return "Missing variable"
         else if (this.groupedData.length === 0 || this.groupedData[0].values.length === 0)
             return "No matching data"
@@ -33,10 +33,10 @@ export class StackedBarTransform implements IChartTransform {
     }
 
     @computed get primaryDimension(): DimensionWithData | undefined {
-        return find(this.chart.data.filledDimensions, d => d.property === "y")
+        return find(this.chart.data.dimensionsWithData, d => d.property === "y")
     }
     @computed get colorDimension(): DimensionWithData | undefined {
-        return find(this.chart.data.filledDimensions, d => d.property === 'color')
+        return find(this.chart.data.dimensionsWithData, d => d.property === 'color')
     }
 
     @computed get targetYear(): number {
@@ -123,7 +123,7 @@ export class StackedBarTransform implements IChartTransform {
     }
 
     @computed get yDimensionFirst() {
-        return find(this.chart.data.filledDimensions, d => d.property === 'y')
+        return find(this.chart.data.dimensionsWithData, d => d.property === 'y')
     }
 
     @computed get yTickFormat() {
@@ -156,11 +156,11 @@ export class StackedBarTransform implements IChartTransform {
 
     @computed get groupedData(): StackedBarSeries[] {
         const { chart, timelineYears } = this
-        const { filledDimensions, selectedKeys, selectedKeysByKey } = chart.data
+        const { dimensionsWithData, selectedKeys, selectedKeysByKey } = chart.data
 
         let groupedData: StackedBarSeries[] = []
 
-        filledDimensions.forEach((dimension, dimIndex) => {
+        dimensionsWithData.forEach((dimension, dimIndex) => {
             const seriesByKey = new Map<DataKey, StackedBarSeries>()
 
             for (let i=0; i <= dimension.years.length; i += 1) {

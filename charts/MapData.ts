@@ -141,7 +141,7 @@ export class MapData {
     }
 
     @computed get dimension(): DimensionWithData | undefined {
-        return this.chart.data.filledDimensions.find(d => d.variableId === this.map.variableId)
+        return this.chart.data.dimensionsWithData.find(d => d.variableId === this.map.variableId)
     }
 
     // Figure out which entities in the variable can be shown on the map

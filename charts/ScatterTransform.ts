@@ -43,10 +43,10 @@ export class ScatterTransform implements IChartTransform {
     }
 
     @computed get failMessage(): string | undefined {
-        const { filledDimensions } = this.chart.data
-        if (!some(filledDimensions, d => d.property === 'y'))
+        const { dimensionsWithData } = this.chart.data
+        if (!some(dimensionsWithData, d => d.property === 'y'))
             return "Missing Y axis variable"
-        else if (!some(filledDimensions, d => d.property === 'x'))
+        else if (!some(dimensionsWithData, d => d.property === 'x'))
             return "Missing X axis variable"
         else if (isEmpty(this.possibleEntities))
             return "No entities with data for both X and Y"
@@ -61,13 +61,13 @@ export class ScatterTransform implements IChartTransform {
     // Scatterplot should have exactly one dimension for each of x and y
     // The y dimension is treated as the "primary" variable
     @computed get yDimension(): DimensionWithData | undefined {
-        return this.chart.data.filledDimensions.find(d => d.property === 'y')
+        return this.chart.data.dimensionsWithData.find(d => d.property === 'y')
     }
     @computed get xDimension(): DimensionWithData | undefined {
-        return this.chart.data.filledDimensions.find(d => d.property === 'x')
+        return this.chart.data.dimensionsWithData.find(d => d.property === 'x')
     }
     @computed get colorDimension(): DimensionWithData | undefined {
-        return this.chart.data.filledDimensions.find(d => d.property === 'color')
+        return this.chart.data.dimensionsWithData.find(d => d.property === 'color')
     }
     @computed get axisDimensions(): DimensionWithData[] {
         const dimensions = []
@@ -191,12 +191,12 @@ export class ScatterTransform implements IChartTransform {
     // If there's no timeline, this uses the same structure but only computes for a single year
     @computed get dataByEntityAndYear(): Map<string, Map<number, ScatterValue>> {
         const { chart, yearsToCalculate, colors, entitiesToShow, xOverrideYear } = this
-        const { filledDimensions } = chart.data
+        const { dimensionsWithData } = chart.data
         const validEntityLookup = keyBy(entitiesToShow)
 
         const dataByEntityAndYear = new Map<string, Map<number, ScatterValue>>()
 
-        for (const dimension of filledDimensions) {
+        for (const dimension of dimensionsWithData) {
             const tolerance = (dimension.property === 'color' || dimension.property === 'size') ? Infinity : dimension.tolerance
 
             // First, we organize the data by entity

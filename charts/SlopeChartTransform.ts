@@ -23,8 +23,8 @@ export class SlopeChartTransform implements IChartTransform {
     }
 
     @computed get failMessage(): string | undefined {
-        const { filledDimensions } = this.chart.data
-        if (!some(filledDimensions, d => d.property === 'y'))
+        const { dimensionsWithData } = this.chart.data
+        if (!some(dimensionsWithData, d => d.property === 'y'))
             return "Missing Y axis variable"
         else if (isEmpty(this.data))
             return "No matching data"
@@ -77,15 +77,15 @@ export class SlopeChartTransform implements IChartTransform {
     }
 
     @computed.struct get sizeDim(): DimensionWithData|undefined {
-        return find(this.chart.data.filledDimensions, d => d.property === 'size')
+        return find(this.chart.data.dimensionsWithData, d => d.property === 'size')
     }
 
     @computed.struct get colorDimension(): DimensionWithData|undefined {
-        return this.chart.data.filledDimensions.find(d => d.property === 'color')
+        return this.chart.data.dimensionsWithData.find(d => d.property === 'color')
     }
 
     @computed.struct get yDimension(): DimensionWithData | undefined {
-        return find(this.chart.data.filledDimensions, d => d.property === 'y')
+        return find(this.chart.data.dimensionsWithData, d => d.property === 'y')
     }
 
     // helper method to directly get the associated color value given an Entity

@@ -22,8 +22,8 @@ export class DiscreteBarTransform implements IChartTransform {
     }
 
     @computed get failMessage(): string | undefined {
-        const { filledDimensions } = this.chart.data
-        if (!some(filledDimensions, d => d.property === 'y'))
+        const { dimensionsWithData } = this.chart.data
+        if (!some(dimensionsWithData, d => d.property === 'y'))
             return "Missing variable"
         else if (isEmpty(this.currentData))
             return "No matching data"
@@ -32,7 +32,7 @@ export class DiscreteBarTransform implements IChartTransform {
     }
 
     @computed get primaryDimensions(): DimensionWithData[] {
-        return this.chart.data.filledDimensions.filter(d => d.property === "y")
+        return this.chart.data.dimensionsWithData.filter(d => d.property === "y")
     }
 
     @computed get targetYear(): number {
@@ -66,10 +66,10 @@ export class DiscreteBarTransform implements IChartTransform {
 
     @computed get currentData(): DiscreteBarDatum[] {
         const { chart, targetYear } = this
-        const { filledDimensions, selectedKeysByKey } = chart.data
+        const { dimensionsWithData, selectedKeysByKey } = chart.data
         const dataByKey: { [key: string]: DiscreteBarDatum } = {}
 
-        filledDimensions.forEach((dimension, dimIndex) => {
+        dimensionsWithData.forEach((dimension, dimIndex) => {
             const { tolerance } = dimension
 
             for (let i = 0; i < dimension.years.length; i++) {
@@ -125,10 +125,10 @@ export class DiscreteBarTransform implements IChartTransform {
         }
 
         const { chart } = this
-        const { filledDimensions, selectedKeysByKey } = chart.data
+        const { dimensionsWithData, selectedKeysByKey } = chart.data
         const allData: DiscreteBarDatum[] = []
 
-        filledDimensions.forEach((dimension, dimIndex) => {
+        dimensionsWithData.forEach((dimension, dimIndex) => {
             for (let i = 0; i < dimension.years.length; i++) {
                 const year = dimension.years[i]
                 const entity = dimension.entities[i]

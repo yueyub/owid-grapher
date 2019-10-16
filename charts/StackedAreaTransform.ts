@@ -23,8 +23,8 @@ export class StackedAreaTransform implements IChartTransform {
     }
 
     @computed get failMessage(): string | undefined {
-        const { filledDimensions } = this.chart.data
-        if (!some(filledDimensions, d => d.property === 'y'))
+        const { dimensionsWithData } = this.chart.data
+        if (!some(dimensionsWithData, d => d.property === 'y'))
             return "Missing Y axis variable"
         else if (this.groupedData.length === 0 || this.groupedData[0].values.length === 0)
             return "No matching data"
@@ -36,12 +36,12 @@ export class StackedAreaTransform implements IChartTransform {
     // "lines up" i.e. has a data point for every year
     @computed get groupedData(): StackedAreaSeries[] {
         const { chart } = this
-        const { filledDimensions, selectedKeys, selectedKeysByKey } = chart.data
+        const { dimensionsWithData, selectedKeys, selectedKeysByKey } = chart.data
 
         let groupedData: StackedAreaSeries[] = []
 
         // First, we populate the data as we would for a line chart (each series independently)
-        filledDimensions.forEach((dimension, dimIndex) => {
+        dimensionsWithData.forEach((dimension, dimIndex) => {
             const seriesByKey = new Map<DataKey, StackedAreaSeries>()
 
             for (let i = 0; i < dimension.years.length; i++) {
@@ -240,7 +240,7 @@ export class StackedAreaTransform implements IChartTransform {
     }
 
     @computed get yDimensionFirst() {
-        return find(this.chart.data.filledDimensions, d => d.property === 'y')
+        return find(this.chart.data.dimensionsWithData, d => d.property === 'y')
     }
 
     @computed get yAxis(): AxisSpec {

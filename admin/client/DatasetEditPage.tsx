@@ -95,7 +95,7 @@ class VariableEditRow extends React.Component<{ variable: VariableEditListItem, 
                 chart.props.addCountryMode = 'change-country'
             } else {
                 chart.props.addCountryMode = 'add-country'
-                if (chart.data.filledDimensions[0].yearsUniq.length === 1) {
+                if (chart.data.dimensionsWithData[0].yearsUniq.length === 1) {
                     chart.props.type = ChartType.DiscreteBar
                     chart.data.selectedKeys = chart.data.availableKeys.length > 15 ? _.sampleSize(chart.data.availableKeys, 8) : chart.data.availableKeys
                 } else {

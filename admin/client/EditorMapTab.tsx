@@ -25,9 +25,9 @@ class VariableSection extends React.Component<{ mapConfig: MapConfig }> {
 
     render() {
         const {mapConfig} = this.props
-        const { filledDimensions } = mapConfig.chart.data
+        const { dimensionsWithData } = mapConfig.chart.data
 
-        if (isEmpty(filledDimensions))
+        if (isEmpty(dimensionsWithData))
             return <section>
                 <h2>Add some variables on data tab first</h2>
             </section>
@@ -36,7 +36,7 @@ class VariableSection extends React.Component<{ mapConfig: MapConfig }> {
         const labels = ['World', 'Africa', 'North America', 'South America', 'Asia', 'Europe', 'Oceania']
 
         return <Section name="Map">
-            <NumericSelectField label="Variable" value={mapConfig.variableId as number} options={filledDimensions.map(d => d.variableId)} optionLabels={filledDimensions.map(d => d.displayName)} onValue={this.onVariableId} />
+            <NumericSelectField label="Variable" value={mapConfig.variableId as number} options={dimensionsWithData.map(d => d.variableId)} optionLabels={dimensionsWithData.map(d => d.displayName)} onValue={this.onVariableId} />
             <SelectField label="Region" value={mapConfig.props.projection} options={projections} optionLabels={labels} onValue={this.onProjection} />
         </Section>
 

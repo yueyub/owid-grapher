@@ -85,7 +85,7 @@ export class DimensionSlot {
     }
 
     @computed get dimensionsWithData(): DimensionWithData[] {
-        return this.chart.data.filledDimensions.filter(d => d.property === this.property)
+        return this.chart.data.dimensionsWithData.filter(d => d.property === this.property)
     }
 
     createDimension(variableId: number) {

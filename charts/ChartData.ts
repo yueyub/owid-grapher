@@ -47,7 +47,7 @@ export class ChartData {
         return every(chart.dimensions, dim => !!vardata.variablesById[dim.variableId])
     }
 
-    @computed.struct get filledDimensions(): DimensionWithData[] {
+    @computed.struct get dimensionsWithData(): DimensionWithData[] {
         if (!this.isReady) return []
 
         return map(this.chart.dimensions, (dim, i) => {
@@ -57,11 +57,11 @@ export class ChartData {
     }
 
     @computed get primaryDimensions() {
-        return this.filledDimensions.filter(dim => dim.property === 'y')
+        return this.dimensionsWithData.filter(dim => dim.property === 'y')
     }
 
     @computed get axisDimensions() {
-        return this.filledDimensions.filter(dim => dim.property === 'y' || dim.property === 'x')
+        return this.dimensionsWithData.filter(dim => dim.property === 'y' || dim.property === 'x')
     }
 
     @computed get defaultTitle(): string {
@@ -202,7 +202,7 @@ export class ChartData {
     }
 
     @computed get dimensionsByField(): { [key: string]: DimensionWithData } {
-        return keyBy(this.filledDimensions, 'property')
+        return keyBy(this.dimensionsWithData, 'property')
     }
 
     @computed get selectionData(): Array<{ key: DataKey, color?: Color }> {
@@ -395,10 +395,10 @@ export class ChartData {
     }
 
     @computed get sources(): SourceWithDimension[] {
-        const { filledDimensions } = this
+        const { dimensionsWithData } = this
 
         const sources: SourceWithDimension[] = []
-        each(filledDimensions, (dim) => {
+        each(dimensionsWithData, (dim) => {
             const { variable } = dim
             // HACK (Mispy): Ignore the default color source on scatterplots.
             if (variable.name !== "Countries Continents" && variable.name !== "Total population (Gapminder)")

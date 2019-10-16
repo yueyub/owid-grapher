@@ -19,7 +19,7 @@ export class DataTab extends React.Component<{ bounds: Bounds, chart: ChartConfi
         const { chart } = this.props
         const { vardata } = chart
 
-        const dimensions = chart.data.filledDimensions.filter(d => d.property !== 'color')
+        const dimensions = chart.data.dimensionsWithData.filter(d => d.property !== 'color')
         const entitiesUniq = sortBy(uniq(flatten(dimensions.map(d => d.entitiesUniq)))) as string[]
         const yearsUniq = sortBy(uniq(flatten(dimensions.map(d => d.yearsUniq)))) as number[]
 
