@@ -230,6 +230,7 @@
         "xhr-mock": "^2.5.1"
     },
     "prettier": {
-        "semi": false
+        "semi": false,
+        "printWidth": 100
     }
 }
