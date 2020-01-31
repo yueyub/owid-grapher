@@ -73,35 +73,62 @@ export async function renderExplorePage() {
 }
 
 export async function renderExplorableIndicatorsJson() {
-    const query: { id: number; config: any }[] = await db.query(
+    const chartsQuery: {
+        id: number
+        config: any
+        tagIds: string
+    }[] = await db.query(
         `
-        SELECT id, config
+        SELECT id, config, GROUP_CONCAT(chart_tags.tagId) AS tagIds
         FROM charts
+        JOIN chart_tags ON chart_tags.chartId = charts.id
         WHERE charts.isExplorable
         ${FORCE_EXPLORABLE_CHART_IDS.length ? `OR charts.id IN (?)` : ""}
+        GROUP BY charts.id
         `,
         [FORCE_EXPLORABLE_CHART_IDS]
     )
 
-    const explorableCharts = query
+    const explorableCharts = chartsQuery
         .map(chart => ({
             id: chart.id,
-            config: JSON.parse(chart.config) as ChartConfigProps
+            config: JSON.parse(chart.config) as ChartConfigProps,
+            tagIds: chart.tagIds.split(",").map(tagId => parseInt(tagId))
         }))
         // Ensure config is consistent with the current "explorable" requirements
         .filter(chart => isExplorable(chart.config))
 
-    const result: Indicator[] = explorableCharts.map(chart => ({
+    const tagIds = _.uniq(
+        _.flatten(explorableCharts.map(chart => chart.tagIds))
+    )
+
+    const tags: {
+        id: number
+        name: string
+        parentId: number
+    }[] = await db.query(
+        `
+        SELECT id, name, parentId
+        FROM tags
+        WHERE
+            id IN (?)
+            OR id IN (SELECT parentId FROM tags WHERE id IN (?))
+        `,
+        [tagIds, tagIds]
+    )
+
+    const indicators: Indicator[] = explorableCharts.map(chart => ({
         id: chart.id,
         title: chart.config.title,
         subtitle: chart.config.subtitle,
         sourceDesc: chart.config.sourceDesc,
         note: chart.config.note,
         dimensions: chart.config.dimensions,
-        map: chart.config.map
+        map: chart.config.map,
+        tagIds: chart.tagIds
     }))
 
-    return JSON.stringify({ indicators: result })
+    return JSON.stringify({ indicators, tags })
 }
 
 export async function renderPageBySlug(slug: string) {
