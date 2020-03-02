@@ -49,6 +49,7 @@ export class VariableDisplaySettings {
     @observable conversionFactor?: number = undefined
     @observable numDecimalPlaces?: number = undefined
     @observable tolerance?: number = undefined
+    // TODO
 }
 
 export class Variable {

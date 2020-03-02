@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { TextWrap } from './TextWrap'
-import { computed } from 'mobx'
+import { computed, action } from 'mobx'
 import { observer } from 'mobx-react'
 import { ChartConfig } from './ChartConfig'
 import { Logo, LogoOption } from './Logos'
@@ -118,6 +118,10 @@ class HeaderView extends React.Component<{ x: number, y: number, header: Header 
 
 @observer
 export class HeaderHTML extends React.Component<{ chart: ChartConfig, header: Header }> {
+    @action.bound onChangeVariable(variableId: number) {
+        this.props.chart.props.selectedVariableId = variableId
+    }
+
     render() {
 
         const {chart, header} = this.props
@@ -139,6 +143,13 @@ export class HeaderHTML extends React.Component<{ chart: ChartConfig, header: He
                 <h1 style={titleStyle}>{header.title.renderHTML()}</h1>
             </a>
             <p style={subtitleStyle}>{header.subtitle.renderHTML()}</p>
+            {chart.variableSwitching && <div>
+                <select value={chart.props.selectedVariableId} onChange={(event) => this.onChangeVariable(parseInt(event.target.value, 10))}>
+                    {chart.data.switchableDimensions.map((dim) => <option value={dim.variableId}>
+                        {dim.variable.name}
+                    </option>)}
+                </select>
+            </div>}
         </div>
     }
 }

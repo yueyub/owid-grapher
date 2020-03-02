@@ -62,4 +62,8 @@ export class EditorFeatures {
     @computed get comparisonLine() {
         return this.chart.isLineChart || this.chart.isScatter
     }
+
+    @computed get supportsSwitching(): boolean {
+        return this.chart.isLineChart && this.chart.dimensions.length > 1
+    }
 }

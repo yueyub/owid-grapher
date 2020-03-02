@@ -89,7 +89,7 @@ class VariableEditRow extends React.Component<{ variable: VariableEditListItem, 
             chart.props.hasMapTab = false
             if (chart.isScatter || chart.isSlopeChart) {
                 chart.data.selectedKeys = []
-            } else if (chart.data.primaryDimensions.length > 1) {
+            } else if (chart.data.primaryDimensions.length > 1 && !chart.variableSwitching) {
                 const entity = _.includes(chart.data.availableEntities, "World") ? "World" : _.sample(chart.data.availableEntities)
                 chart.data.selectedKeys = chart.data.availableKeys.filter(key => chart.data.lookupKey(key).entity === entity)
                 chart.props.addCountryMode = 'change-country'

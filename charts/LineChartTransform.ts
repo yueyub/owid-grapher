@@ -23,8 +23,8 @@ export class LineChartTransform implements IChartTransform {
     }
 
     @computed get failMessage(): string | undefined {
-        const { dimensionsWithData } = this.chart.data
-        if (!some(dimensionsWithData, d => d.property === 'y'))
+        const { filteredDimensions } = this.chart.data
+        if (!some(filteredDimensions, d => d.property === 'y'))
             return "Missing Y axis variable"
         else if (isEmpty(this.groupedData))
             return "No matching data"
@@ -44,11 +44,11 @@ export class LineChartTransform implements IChartTransform {
     @computed get initialData(): LineChartSeries[] {
         const { chart } = this
         const { yAxis } = chart
-        const { dimensionsWithData, selectedKeys, selectedKeysByKey } = chart.data
+        const { filteredDimensions, selectedKeys, selectedKeysByKey } = chart.data
 
         let chartData: LineChartSeries[] = []
 
-        dimensionsWithData.forEach((dimension, dimIndex) => {
+        filteredDimensions.forEach((dimension, dimIndex) => {
 
             const seriesByKey = new Map<DataKey, LineChartSeries>()
 
@@ -175,7 +175,7 @@ export class LineChartTransform implements IChartTransform {
     }
 
     @computed get yDimensionFirst(): DimensionWithData | undefined {
-        return this.chart.data.dimensionsWithData.find(d => d.property === 'y')
+        return this.chart.data.filteredDimensions.find(d => d.property === 'y')
     }
 
     @computed get yDomainDefault(): [number, number] {

@@ -56,12 +56,25 @@ export class ChartData {
         })
     }
 
-    @computed get primaryDimensions() {
+    @computed get filteredDimensions(): DimensionWithData[] {
+        console.log('filledDimensions')
+        if (this.chart.variableSwitching) {
+            return this.dimensionsWithData.filter((dim) => dim.property !== 'y' || dim.variableId === this.chart.props.selectedVariableId)
+        } else {
+            return this.dimensionsWithData
+        }
+    }
+
+    @computed get switchableDimensions() {
         return this.dimensionsWithData.filter(dim => dim.property === 'y')
     }
 
+    @computed get primaryDimensions() {
+        return this.filteredDimensions.filter(dim => dim.property === 'y')
+    }
+
     @computed get axisDimensions() {
-        return this.dimensionsWithData.filter(dim => dim.property === 'y' || dim.property === 'x')
+        return this.filteredDimensions.filter(dim => dim.property === 'y' || dim.property === 'x')
     }
 
     @computed get defaultTitle(): string {
@@ -395,10 +408,10 @@ export class ChartData {
     }
 
     @computed get sources(): SourceWithDimension[] {
-        const { dimensionsWithData } = this
+        const { filteredDimensions } = this
 
         const sources: SourceWithDimension[] = []
-        each(dimensionsWithData, (dim) => {
+        each(filteredDimensions, (dim) => {
             const { variable } = dim
             // HACK (Mispy): Ignore the default color source on scatterplots.
             if (variable.name !== "Countries Continents" && variable.name !== "Total population (Gapminder)")

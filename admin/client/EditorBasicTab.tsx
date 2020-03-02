@@ -45,7 +45,7 @@ class DimensionSlotView extends React.Component<{ slot: DimensionSlot, editor: C
             () => {
                 if (chart.isScatter || chart.isSlopeChart) {
                     chart.data.selectedKeys = []
-                } else if (chart.data.primaryDimensions.length > 1) {
+                } else if (chart.data.primaryDimensions.length > 1 && !chart.variableSwitching) {
                     const entity = includes(chart.data.availableEntities, "World") ? "World" : sample(chart.data.availableEntities)
                     chart.data.selectedKeys = chart.data.availableKeys.filter(key => chart.data.lookupKey(key).entity === entity)
                     chart.props.addCountryMode = 'change-country'
@@ -123,6 +123,9 @@ export class EditorBasicTab extends React.Component<{ editor: ChartEditor }> {
                 </FieldsRow>
             </Section>
             <VariablesSection editor={editor} />
+            {editor.features.supportsSwitching && <Section name="Variable switching">
+                <Toggle label="Allow users to switch variables" value={!!editor.chart.props.variableSwitching} onValue={v => editor.chart.props.variableSwitching = v || undefined}/>
+            </Section>}
         </div>
     }
 }

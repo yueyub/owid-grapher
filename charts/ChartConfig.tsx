@@ -153,6 +153,11 @@ export class ChartConfigProps {
     @observable.ref baseColorScheme?: string = undefined
     @observable.ref invertColorScheme?: true = undefined
 
+    // VARIABLE SWITCHING ON LINE CHART
+
+    @observable.ref variableSwitching?: boolean = undefined
+    @observable.ref selectedVariableId?: number = undefined
+
     // SCATTERPLOT-SPECIFIC OPTIONS
 
     @observable.ref hideLinesOutsideTolerance?: true = undefined
@@ -220,6 +225,10 @@ export class ChartConfig {
         return !this.props.hideLogo && (this.props.logo === undefined || this.props.logo === "owid")
     }
 
+    @computed get variableSwitching(): boolean {
+        return (this.isLineChart && this.dimensions.length > 1 && this.props.variableSwitching) || false
+    }
+
     constructor(props?: ChartConfigProps, options: { isEmbed?: boolean, isMediaCard?: boolean, queryStr?: string } = {}) {
         this.isEmbed = !!options.isEmbed
         this.isMediaCard = !!options.isMediaCard
@@ -250,6 +259,13 @@ export class ChartConfig {
         autorun(() => {
             if (!isEqual(this.props.dimensions, this.validDimensions)) {
                 this.props.dimensions = this.validDimensions
+            }
+        })
+
+        autorun(() => {
+            const variableIds = this.dimensions.filter((dim) => dim.property === 'y').map((dim) => dim.variableId)
+            if (this.variableSwitching && (this.props.selectedVariableId === undefined || !variableIds.includes(this.props.selectedVariableId))) {
+                runInAction(() => this.props.selectedVariableId = variableIds[0])
             }
         })
     }

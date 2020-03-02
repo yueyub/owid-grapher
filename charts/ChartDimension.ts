@@ -15,7 +15,8 @@ export class ChartDimension {
         isProjection: undefined,
         conversionFactor: undefined,
         numDecimalPlaces: undefined,
-        tolerance: undefined
+        tolerance: undefined,
+        // TODO
     }
 
     // XXX move this somewhere else, it's only used for scatter x override

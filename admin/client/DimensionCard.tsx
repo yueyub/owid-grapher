@@ -49,6 +49,7 @@ export class DimensionCard extends React.Component<{ dimension: DimensionWithDat
                 </div>
             </header>
             {this.isExpanded && <div>
+                {/* TODO */}
                 <BindAutoString label="Display name" field="name" store={dimension.props.display} auto={dimension.displayName}/>
                 <BindAutoString label="Unit of measurement" field="unit" store={dimension.props.display} auto={dimension.unit} helpText={`Original database unit: ${dimension.variable.unit}`}/>
                 <BindAutoString label="Short (axis) unit" field="shortUnit" store={dimension.props.display} auto={dimension.shortUnit}/>
