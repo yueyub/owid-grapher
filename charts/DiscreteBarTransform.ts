@@ -41,16 +41,18 @@ export class DiscreteBarTransform implements IChartTransform {
         return this.chart.data.filledDimensions.filter(d => d.property === "y")
     }
 
-    @computed get targetYear(): number {
-        const maxYear = this.chart.timeDomain[1]
+    @computed get targetMoment(): number {
+        const maxMoment = this.chart.timeDomain[1]
         if (this.primaryDimensions.length === 0) return 1900
 
-        const yearsUniq = flatten(
-            this.primaryDimensions.map(dim => dim.variable.yearsUniq)
+        const momentsUniq = flatten(
+            this.primaryDimensions.map(dim => dim.variable.momentsUniq)
         )
-        if (maxYear !== undefined)
-            return sortBy(yearsUniq, year => Math.abs(year - maxYear))[0]
-        else return max(yearsUniq) as number
+        if (maxMoment !== undefined)
+            return sortBy(momentsUniq, moment =>
+                Math.abs(moment - maxMoment)
+            )[0]
+        else return max(momentsUniq) as number
     }
 
     @computed get hasTimeline(): boolean {
@@ -58,14 +60,15 @@ export class DiscreteBarTransform implements IChartTransform {
     }
 
     @computed get barValueFormat(): (datum: DiscreteBarDatum) => string {
-        const { targetYear } = this
+        const { targetMoment } = this
 
         return (datum: DiscreteBarDatum) => {
-            const showYearLabels =
-                this.chart.props.showYearLabels || datum.year !== targetYear
+            const showMomentLabels =
+                this.chart.props.showMomentLabels ||
+                datum.moment !== targetMoment
             return (
                 datum.formatValue(datum.value) +
-                (showYearLabels ? ` (in ${datum.year})` : "")
+                (showMomentLabels ? ` (in ${datum.moment})` : "")
             )
         }
     }
@@ -81,38 +84,38 @@ export class DiscreteBarTransform implements IChartTransform {
     }
 
     @computed get currentData(): DiscreteBarDatum[] {
-        const { chart, targetYear } = this
+        const { chart, targetMoment } = this
         const { filledDimensions, selectedKeysByKey } = chart.data
         const dataByKey: { [key: string]: DiscreteBarDatum } = {}
 
         filledDimensions.forEach((dimension, dimIndex) => {
             const { tolerance } = dimension
 
-            for (let i = 0; i < dimension.years.length; i++) {
-                const year = dimension.years[i]
+            for (let i = 0; i < dimension.moments.length; i++) {
+                const moment = dimension.moments[i]
                 const entity = dimension.entities[i]
                 const datakey = chart.data.keyFor(entity, dimIndex)
 
                 if (
-                    year < targetYear - tolerance ||
-                    year > targetYear + tolerance ||
+                    moment < targetMoment - tolerance ||
+                    moment > targetMoment + tolerance ||
                     !selectedKeysByKey[datakey]
                 )
                     continue
 
                 const currentDatum = dataByKey[datakey]
-                // Make sure we use the closest value to the target year within tolerance (preferring later)
+                // Make sure we use the closest value to the target moment within tolerance (preferring later)
                 if (
                     currentDatum &&
-                    Math.abs(currentDatum.year - targetYear) <
-                        Math.abs(year - targetYear)
+                    Math.abs(currentDatum.moment - targetMoment) <
+                        Math.abs(moment - targetMoment)
                 )
                     continue
 
                 const datum = {
                     key: datakey,
                     value: +dimension.values[i],
-                    year: year,
+                    moment,
                     label: chart.data.formatKey(datakey),
                     color: "#2E5778",
                     formatValue: dimension.formatValueShort
@@ -165,8 +168,8 @@ export class DiscreteBarTransform implements IChartTransform {
         const allData: DiscreteBarDatum[] = []
 
         filledDimensions.forEach((dimension, dimIndex) => {
-            for (let i = 0; i < dimension.years.length; i++) {
-                const year = dimension.years[i]
+            for (let i = 0; i < dimension.moments.length; i++) {
+                const moment = dimension.moments[i]
                 const entity = dimension.entities[i]
                 const datakey = chart.data.keyFor(entity, dimIndex)
 
@@ -175,7 +178,7 @@ export class DiscreteBarTransform implements IChartTransform {
                 const datum = {
                     key: datakey,
                     value: +dimension.values[i],
-                    year: year,
+                    moment,
                     label: chart.data.formatKey(datakey),
                     color: "#2E5778",
                     formatValue: dimension.formatValueShort

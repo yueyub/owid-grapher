@@ -198,14 +198,13 @@ export function entityNameForMap(name: string) {
     return name //return makeSafeForCSS(name.replace(/[ '&:\(\)\/]/g, "_"))
 }
 
-export function formatYear(year: number): string {
-    if (isNaN(year)) {
-        console.warn(`Invalid year '${year}'`)
+export function formatMoment(moment: number): string {
+    if (isNaN(moment)) {
+        console.warn(`Invalid year '${moment}'`)
         return ""
     }
 
-    if (year < 0) return `${Math.abs(year)} BCE`
-    else return year.toString()
+    return moment < 0 ? `${Math.abs(moment)} BCE` : moment.toString()
 }
 
 export function numberOnly(value: any): number | undefined {
@@ -476,29 +475,29 @@ export function stripHTML(html: string): string {
     return striptags(html)
 }
 
-export function findClosestYear(
-    years: number[] | Iterable<number>,
-    targetYear: number,
+export function findClosestMoment(
+    moments: number[] | Iterable<number>,
+    targetMoment: number,
     tolerance?: number
 ): number | undefined {
     let closest: number | undefined
-    for (const year of years) {
-        const currentYearDist = Math.abs(year - targetYear)
-        const closestYearDist = closest
-            ? Math.abs(closest - targetYear)
+    for (const moment of moments) {
+        const currentMomentDist = Math.abs(moment - targetMoment)
+        const closestMomentDist = closest
+            ? Math.abs(closest - targetMoment)
             : Infinity
 
-        if (tolerance !== undefined && currentYearDist > tolerance) {
+        if (tolerance !== undefined && currentMomentDist > tolerance) {
             continue
         }
 
         if (
             closest === undefined ||
-            closestYearDist > currentYearDist ||
-            // Prefer later years, e.g. if targetYear is 2010, prefer 2011 to 2009
-            (closestYearDist === currentYearDist && year > closest)
+            closestMomentDist > currentMomentDist ||
+            // Prefer later moments, e.g. if targetMoment is 2010, prefer 2011 to 2009
+            (closestMomentDist === currentMomentDist && moment > closest)
         ) {
-            closest = year
+            closest = moment
         }
     }
     return closest
@@ -517,25 +516,25 @@ export function es6mapValues<K, V, M>(
 }
 
 export interface DataValue {
-    year: number | undefined
+    moment: number | undefined
     value: number | string | undefined
 }
 
-export function valuesByEntityAtYears(
-    valueByEntityAndYear: Map<string, Map<number, string | number>>,
-    targetYears: number[],
+export function valuesByEntityAtMoments(
+    valueByEntityAndMoment: Map<string, Map<number, string | number>>,
+    targetMoments: number[],
     tolerance: number = 0
 ): Map<string, DataValue[]> {
-    return es6mapValues(valueByEntityAndYear, valueByYear => {
-        const years = Array.from(valueByYear.keys())
-        const values = targetYears.map(targetYear => {
+    return es6mapValues(valueByEntityAndMoment, valueByMoment => {
+        const moments = Array.from(valueByMoment.keys())
+        const values = targetMoments.map(targetMoment => {
             let value
-            const year = findClosestYear(years, targetYear, tolerance)
-            if (year !== undefined) {
-                value = valueByYear.get(year)
+            const moment = findClosestMoment(moments, targetMoment, tolerance)
+            if (moment !== undefined) {
+                value = valueByMoment.get(moment)
             }
             return {
-                year,
+                moment,
                 value
             }
         })
@@ -543,20 +542,20 @@ export function valuesByEntityAtYears(
     })
 }
 
-export function valuesByEntityWithinYears(
-    valueByEntityAndYear: Map<string, Map<number, string | number>>,
+export function valuesByEntityWithinMoments(
+    valueByEntityAndMoment: Map<string, Map<number, string | number>>,
     range: (number | undefined)[],
     boundsOnly: boolean = false
 ): Map<string, DataValue[]> {
     const start = range[0] !== undefined ? range[0] : -Infinity
     const end = range[1] !== undefined ? range[1] : Infinity
-    return es6mapValues(valueByEntityAndYear, valueByYear => {
-        const years = Array.from(valueByYear.keys()).filter(
-            year => year >= start && year <= end
+    return es6mapValues(valueByEntityAndMoment, valueByMoment => {
+        const moments = Array.from(valueByMoment.keys()).filter(
+            moment => moment >= start && moment <= end
         )
-        const values = years.map(year => ({
-            year,
-            value: valueByYear.get(year)
+        const values = moments.map(moment => ({
+            moment,
+            value: valueByMoment.get(moment)
         }))
         return values
     })
@@ -565,7 +564,7 @@ export function valuesByEntityWithinYears(
 export function getStartEndValues(
     values: DataValue[]
 ): (DataValue | undefined)[] {
-    const start = minBy(values, dv => dv.year)
-    const end = maxBy(values, dv => dv.year)
+    const start = minBy(values, dv => dv.moment)
+    const end = maxBy(values, dv => dv.moment)
     return [start, end]
 }

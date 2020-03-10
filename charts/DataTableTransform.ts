@@ -1,23 +1,23 @@
 import { computed } from "mobx"
 
 import {
-    valuesByEntityAtYears,
+    valuesByEntityAtMoments,
     es6mapValues,
-    valuesByEntityWithinYears,
+    valuesByEntityWithinMoments,
     getStartEndValues
 } from "./Util"
 import { ChartConfig } from "./ChartConfig"
 import { DimensionWithData } from "./DimensionWithData"
 import { TickFormattingOptions } from "./TickFormattingOptions"
 
-// Target year modes
+// Target moment modes
 
-export enum TargetYearMode {
+export enum TargetMomentMode {
     point = "point",
     range = "range"
 }
 
-type TargetYears = [number] | [number, number]
+type TargetMoments = [number] | [number, number]
 
 // Sorting modes
 
@@ -36,8 +36,8 @@ export interface Dimension {
 
 export interface DimensionColumn {
     key: SingleValueKey | RangeValueKey
-    targetYear?: number
-    targetYearMode?: TargetYearMode
+    targetMoment?: number
+    targetMomentMode?: TargetMomentMode
 }
 
 // Data value types
@@ -45,7 +45,7 @@ export interface DimensionColumn {
 export interface Value {
     value?: string | number
     formattedValue?: string
-    year?: number
+    moment?: number
 }
 
 // range (two point values)
@@ -127,30 +127,30 @@ export class DataTableTransform {
     }
 
     // TODO move this logic to chart
-    @computed get targetYearMode(): TargetYearMode {
+    @computed get targetMomentMode(): TargetMomentMode {
         const { tab } = this.chart
         if (tab === "chart") {
             if (
                 (this.chart.isLineChart &&
-                    !this.chart.lineChart.isSingleYear) ||
+                    !this.chart.lineChart.isSingleMoment) ||
                 this.chart.isStackedArea ||
                 this.chart.isStackedBar
             ) {
-                return TargetYearMode.range
+                return TargetMomentMode.range
             }
             if (
                 this.chart.isScatter &&
                 !this.chart.scatter.compareEndPointsOnly
             ) {
-                return TargetYearMode.range
+                return TargetMomentMode.range
             }
         }
-        return TargetYearMode.point
+        return TargetMomentMode.point
     }
 
     // TODO move this logic to chart
-    @computed get targetYears(): TargetYears {
-        const mapTarget = this.chart.map.props.targetYear
+    @computed get targetMoments(): TargetMoments {
+        const mapTarget = this.chart.map.props.targetMoment
         const { timeDomain } = this.chart
         if (this.chart.tab === "map" && mapTarget !== undefined) {
             return [mapTarget]
@@ -178,37 +178,37 @@ export class DataTableTransform {
 
     @computed get dimensionsWithValues(): Dimension[] {
         return this.dimensions.map(dim => {
-            const targetYears =
-                // If a targetYear override is specified on the dimension (scatter plots
-                // can do this) then use that target year and ignore the timeline.
-                dim.targetYear !== undefined
-                    ? [dim.targetYear]
-                    : this.targetYears
+            const targetMoments =
+                // If a targetMoment override is specified on the dimension (scatter plots
+                // can do this) then use that target moment and ignore the timeline.
+                dim.targetMoment !== undefined
+                    ? [dim.targetMoment]
+                    : this.targetMoments
 
-            const targetYearMode =
-                targetYears.length < 2
-                    ? TargetYearMode.point
-                    : this.targetYearMode
+            const targetMomentMode =
+                targetMoments.length < 2
+                    ? TargetMomentMode.point
+                    : this.targetMomentMode
 
             const valuesByEntity =
-                targetYearMode === TargetYearMode.range
+                targetMomentMode === TargetMomentMode.range
                     ? // In the "range" mode, we receive all data values within the range. But we
                       // only want to plot the start & end values in the table.
                       // getStartEndValues() extracts these two values.
                       es6mapValues(
-                          valuesByEntityWithinYears(
-                              dim.valueByEntityAndYear,
-                              targetYears
+                          valuesByEntityWithinMoments(
+                              dim.valueByEntityAndMoment,
+                              targetMoments
                           ),
                           getStartEndValues
                       )
-                    : valuesByEntityAtYears(
-                          dim.valueByEntityAndYear,
-                          targetYears,
+                    : valuesByEntityAtMoments(
+                          dim.valueByEntityAndMoment,
+                          targetMoments,
                           dim.tolerance
                       )
 
-            const isRange = targetYears.length === 2
+            const isRange = targetMoments.length === 2
 
             // Inject delta columns if we have start & end values to compare in the table.
             // One column for absolute difference, another for % difference.
@@ -220,14 +220,14 @@ export class DataTableTransform {
                 : []
 
             const columns: DimensionColumn[] = [
-                ...targetYears.map((targetYear, index) => ({
+                ...targetMoments.map((targetMoment, index) => ({
                     key: isRange
                         ? index === 0
                             ? RangeValueKey.start
                             : RangeValueKey.end
                         : SingleValueKey.single,
-                    targetYear,
-                    targetYearMode
+                    targetMoment,
+                    targetMomentMode
                 })),
                 ...deltaColumns
             ]
@@ -286,7 +286,7 @@ export class DataTableTransform {
                     }
                     return result
                 } else {
-                    // if single year
+                    // if single moment
                     const dv = dvs[0]
                     const result: SingleValue = {
                         single: { ...dv }

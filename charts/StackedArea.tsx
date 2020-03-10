@@ -6,7 +6,7 @@ import {
     last,
     guid,
     pointsToPath,
-    formatYear
+    formatMoment
 } from "./Util"
 import { computed, action, observable } from "mobx"
 import { observer } from "mobx-react"
@@ -304,7 +304,7 @@ export class StackedArea extends React.Component<{
 
         const { transform, hoverIndex, axisBox, chart } = this
 
-        // Grab the first value to get the year from
+        // Grab the first value to get the moment from
         const refValue = transform.stackedData[0].values[hoverIndex]
 
         // If some data is missing, don't calculate a total
@@ -330,7 +330,7 @@ export class StackedArea extends React.Component<{
                     <tbody>
                         <tr>
                             <td>
-                                <strong>{formatYear(refValue.x)}</strong>
+                                <strong>{formatMoment(refValue.x)}</strong>
                             </td>
                             <td></td>
                         </tr>

@@ -19,7 +19,7 @@ export class ChartDimension {
     }
 
     // XXX move this somewhere else, it's only used for scatter x override
-    @observable targetYear?: number = undefined
+    @observable targetMoment?: number = undefined
 
     // If enabled, dimension settings will be saved onto variable as defaults
     // for future charts
@@ -36,7 +36,7 @@ export class ChartDimension {
                 ;(this as any)[key] = (json as any)[key]
             }
 
-            // XXX migrate this away (remember targetYear)
+            // XXX migrate this away (remember targetMoment)
             if ((json as any)[key] === "" || (json as any)[key] === null)
                 (this as any)[key] = undefined
         }

@@ -1,6 +1,6 @@
 import { computed, autorun, runInAction, reaction, toJS } from "mobx"
 import { mean, deviation } from "d3-array"
-import * as _ from "lodash"
+import * as lodash from "lodash"
 
 import { ChartConfig } from "./ChartConfig"
 import { ColorSchemes, ColorScheme } from "./ColorSchemes"
@@ -15,7 +15,7 @@ import {
     isString,
     last,
     findClosest,
-    findClosestYear,
+    findClosestMoment,
     round,
     toArray,
     keys,
@@ -33,7 +33,7 @@ import {
 export interface MapDataValue {
     entity: string
     value: number | string
-    year: number
+    moment: number
 }
 
 export interface NumericBinProps {
@@ -220,29 +220,29 @@ export class MapData {
         return entities
     }
 
-    // Filter data to what can be display on the map (across all years)
+    // Filter data to what can be display on the map (across all moments)
     @computed get mappableData() {
         const { dimension } = this
 
         const mappableData: {
-            years: number[]
+            moments: number[]
             entities: string[]
             values: (number | string)[]
         } = {
-            years: [],
+            moments: [],
             entities: [],
             values: []
         }
 
         if (dimension) {
             const { knownMapEntities } = this
-            for (let i = 0; i < dimension.years.length; i++) {
-                const year = dimension.years[i]
+            for (let i = 0; i < dimension.moments.length; i++) {
+                const moment = dimension.moments[i]
                 const entity = dimension.entities[i]
                 const value = dimension.values[i]
 
                 if (knownMapEntities[entity]) {
-                    mappableData.years.push(year)
+                    mappableData.moments.push(moment)
                     mappableData.entities.push(entity)
                     mappableData.values.push(value)
                 }
@@ -284,29 +284,29 @@ export class MapData {
         return Array.from(valuesMap.keys())
     }
 
-    // All available years with data for the map
-    @computed get timelineYears(): number[] {
+    // All available moments with data for the map
+    @computed get timelineMoments(): number[] {
         const { mappableData } = this
         return sortedUniq(
-            mappableData.years.filter(
+            mappableData.moments.filter(
                 (_, i) => !!this.knownMapEntities[mappableData.entities[i]]
             )
         )
     }
 
     @computed get hasTimeline(): boolean {
-        return !this.map.props.hideTimeline && this.timelineYears.length > 1
+        return !this.map.props.hideTimeline && this.timelineMoments.length > 1
     }
 
-    @computed get targetYear(): number | undefined {
-        const targetYear = defaultTo(
-            this.map.props.targetYear,
-            last(this.timelineYears)
+    @computed get targetMoment(): number | undefined {
+        const targetMoment = defaultTo(
+            this.map.props.targetMoment,
+            last(this.timelineMoments)
         )
-        if (targetYear === undefined) return undefined
+        if (targetMoment === undefined) return undefined
         return defaultTo(
-            findClosest(this.timelineYears, targetYear),
-            last(this.timelineYears)
+            findClosest(this.timelineMoments, targetMoment),
+            last(this.timelineMoments)
         )
     }
 
@@ -516,27 +516,27 @@ export class MapData {
         return legendData
     }
 
-    // Get values for the current year, without any color info yet
+    // Get values for the current moment, without any color info yet
     @computed get valuesByEntity(): { [key: string]: MapDataValue } {
-        const { map, targetYear } = this
-        const valueByEntityAndYear = this.dimension?.valueByEntityAndYear
+        const { map, targetMoment: targetMoment } = this
+        const valueByEntityAndMoment = this.dimension?.valueByEntityAndMoment
 
-        if (targetYear === undefined || !valueByEntityAndYear) return {}
+        if (targetMoment === undefined || !valueByEntityAndMoment) return {}
 
         const { tolerance } = map
-        const entities = _.keys(this.knownMapEntities)
+        const entities = lodash.keys(this.knownMapEntities)
 
         const result: { [key: string]: MapDataValue } = {}
 
         entities.forEach(entity => {
-            const valueByYear = valueByEntityAndYear.get(entity)
-            if (!valueByYear) return
-            const years = Array.from(valueByYear.keys())
-            const year = findClosestYear(years, targetYear, tolerance)
-            if (year === undefined) return
-            const value = valueByYear.get(year)
+            const valueByMoment = valueByEntityAndMoment.get(entity)
+            if (!valueByMoment) return
+            const moments = Array.from(valueByMoment.keys())
+            const moment = findClosestMoment(moments, targetMoment, tolerance)
+            if (moment === undefined) return
+            const value = valueByMoment.get(moment)
             if (value === undefined) return
-            result[entity] = { entity, year, value }
+            result[entity] = { entity, moment: moment, value }
         })
 
         return result

@@ -15,7 +15,7 @@ import { ChartConfig } from "./ChartConfig"
 import { DataKey } from "./DataKey"
 import { LineChartSeries, LineChartValue } from "./LineChart"
 import { AxisSpec } from "./AxisSpec"
-import { defaultTo, formatYear, findClosest } from "./Util"
+import { defaultTo, formatMoment, findClosest } from "./Util"
 import { ColorSchemes, ColorScheme } from "./ColorSchemes"
 import { IChartTransform } from "./IChartTransform"
 import { DimensionWithData } from "./DimensionWithData"
@@ -41,7 +41,7 @@ export class LineChartTransform implements IChartTransform {
         else return undefined
     }
 
-    @computed get isSingleYear(): boolean {
+    @computed get isSingleMoment(): boolean {
         return (
             this.chart.timeDomain[0] !== undefined &&
             this.chart.timeDomain[0] === this.chart.timeDomain[1]
@@ -66,8 +66,8 @@ export class LineChartTransform implements IChartTransform {
         filledDimensions.forEach((dimension, dimIndex) => {
             const seriesByKey = new Map<DataKey, LineChartSeries>()
 
-            for (let i = 0; i < dimension.years.length; i++) {
-                const year = dimension.years[i]
+            for (let i = 0; i < dimension.moments.length; i++) {
+                const moment = dimension.moments[i]
                 const value = parseFloat(dimension.values[i] as string)
                 const entity = dimension.entities[i]
                 const datakey = chart.data.keyFor(entity, dimIndex)
@@ -89,7 +89,7 @@ export class LineChartTransform implements IChartTransform {
                     seriesByKey.set(datakey, series)
                 }
 
-                series.values.push({ x: year, y: value, time: year })
+                series.values.push({ x: moment, y: value, time: moment })
             }
 
             chartData = chartData.concat([...Array.from(seriesByKey.values())])
@@ -115,39 +115,41 @@ export class LineChartTransform implements IChartTransform {
         return chartData
     }
 
-    @computed get timelineYears(): number[] {
-        const allYears: number[] = []
-        this.initialData.forEach(g => allYears.push(...g.values.map(d => d.x)))
-        return sortedUniq(sortBy(allYears))
+    @computed get timelineMoments(): number[] {
+        const allMoments: number[] = []
+        this.initialData.forEach(g =>
+            allMoments.push(...g.values.map(d => d.x))
+        )
+        return sortedUniq(sortBy(allMoments))
     }
 
-    @computed get minTimelineYear(): number {
-        return defaultTo(min(this.timelineYears), 1900)
+    @computed get minTimelineMoment(): number {
+        return defaultTo(min(this.timelineMoments), 1900)
     }
 
-    @computed get maxTimelineYear(): number {
-        return defaultTo(max(this.timelineYears), 2000)
+    @computed get maxTimelineMoment(): number {
+        return defaultTo(max(this.timelineMoments), 2000)
     }
 
-    @computed get startYear(): number {
-        const minYear = defaultTo(
+    @computed get startMoment(): number {
+        const minMoment = defaultTo(
             this.chart.timeDomain[0],
-            this.minTimelineYear
+            this.minTimelineMoment
         )
         return defaultTo(
-            findClosest(this.timelineYears, minYear),
-            this.minTimelineYear
+            findClosest(this.timelineMoments, minMoment),
+            this.minTimelineMoment
         )
     }
 
-    @computed get endYear(): number {
-        const maxYear = defaultTo(
+    @computed get endMoment(): number {
+        const maxMoment = defaultTo(
             this.chart.timeDomain[1],
-            this.maxTimelineYear
+            this.maxTimelineMoment
         )
         return defaultTo(
-            findClosest(this.timelineYears, maxYear),
-            this.maxTimelineYear
+            findClosest(this.timelineMoments, maxMoment),
+            this.maxTimelineMoment
         )
     }
 
@@ -156,7 +158,7 @@ export class LineChartTransform implements IChartTransform {
             return cloneDeep(this.initialData).map(series => {
                 const startIndex = findIndex(
                     series.values,
-                    v => v.time >= this.startYear && v.y !== 0
+                    v => v.time >= this.startMoment && v.y !== 0
                 )
                 if (startIndex < 0) {
                     series.values = []
@@ -190,14 +192,14 @@ export class LineChartTransform implements IChartTransform {
     }
 
     @computed get xDomain(): [number, number] {
-        return [this.startYear, this.endYear]
+        return [this.startMoment, this.endMoment]
     }
 
     @computed get xAxis(): AxisSpec {
         const { xDomain } = this
         return {
             label: this.chart.xAxis.label || "",
-            tickFormat: formatYear,
+            tickFormat: formatMoment,
             domain: xDomain,
             scaleType: "linear",
             scaleTypeOptions: ["linear"],
@@ -262,7 +264,7 @@ export class LineChartTransform implements IChartTransform {
 
     @computed get hasTimeline(): boolean {
         return (
-            this.minTimelineYear !== this.maxTimelineYear &&
+            this.minTimelineMoment !== this.maxTimelineMoment &&
             !this.chart.props.hideTimeline
         )
     }

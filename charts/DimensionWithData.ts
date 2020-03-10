@@ -60,8 +60,8 @@ export class DimensionWithData {
         )
     }
 
-    @computed get targetYear(): number | undefined {
-        return this.props.targetYear
+    @computed get targetMoment(): number | undefined {
+        return this.props.targetMoment
     }
 
     @computed get tolerance(): number {
@@ -163,43 +163,43 @@ export class DimensionWithData {
         return this.variable.maxValue * this.unitConversionFactor
     }
 
-    get yearsUniq() {
-        return this.variable.yearsUniq
+    get momentsUniq() {
+        return this.variable.momentsUniq
     }
 
     get entitiesUniq() {
         return this.variable.entitiesUniq
     }
 
-    get years() {
-        return this.variable.years
+    get moments() {
+        return this.variable.moments
     }
 
     get entities() {
         return this.variable.entities
     }
 
-    @computed get valueByEntityAndYear(): Map<
+    @computed get valueByEntityAndMoment(): Map<
         string,
         Map<number, string | number>
     > {
-        const valueByEntityAndYear = new Map<
+        const valueByEntityAndMoment = new Map<
             string,
             Map<number, string | number>
         >()
         for (let i = 0; i < this.values.length; i++) {
             const entity = this.entities[i]
-            const year = this.years[i]
+            const moment = this.moments[i]
             const value = this.values[i]
 
-            let valueByYear = valueByEntityAndYear.get(entity)
-            if (!valueByYear) {
-                valueByYear = new Map()
-                valueByEntityAndYear.set(entity, valueByYear)
+            let valueByMoment = valueByEntityAndMoment.get(entity)
+            if (!valueByMoment) {
+                valueByMoment = new Map()
+                valueByEntityAndMoment.set(entity, valueByMoment)
             }
-            valueByYear.set(year, value)
+            valueByMoment.set(moment, value)
         }
-        return valueByEntityAndYear
+        return valueByEntityAndMoment
     }
 
     constructor(index: number, dimension: ChartDimension, variable: Variable) {

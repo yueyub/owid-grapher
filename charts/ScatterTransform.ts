@@ -74,7 +74,7 @@ export class ScatterTransform implements IChartTransform {
             return "Missing X axis variable"
         else if (isEmpty(this.possibleEntities))
             return "No entities with data for both X and Y"
-        else if (isEmpty(this.possibleDataYears))
+        else if (isEmpty(this.possibleDataMoments))
             return "No years with data for both X and Y"
         else if (isEmpty(this.currentData)) return "No matching data"
         else return undefined
@@ -100,18 +100,18 @@ export class ScatterTransform implements IChartTransform {
         return dimensions
     }
 
-    // Possible to override the x axis dimension to target a special year
+    // Possible to override the x axis dimension to target a special moment
     // In case you want to graph say, education in the past and democracy today https://ourworldindata.org/grapher/correlation-between-education-and-democracy
-    @computed get xOverrideYear(): number | undefined {
-        return this.xDimension && this.xDimension.targetYear
+    @computed get xOverrideMoment(): number | undefined {
+        return this.xDimension && this.xDimension.targetMoment
     }
 
-    set xOverrideYear(value: number | undefined) {
-        ;(this.xDimension as DimensionWithData).props.targetYear = value
+    set xOverrideMoment(value: number | undefined) {
+        ;(this.xDimension as DimensionWithData).props.targetMoment = value
     }
 
     // In relative mode, the timeline scatterplot calculates changes relative
-    // to the lower bound year rather than creating an arrow chart
+    // to the lower bound moment rather than creating an arrow chart
     @computed get isRelativeMode(): boolean {
         return this.chart.props.stackMode === "relative"
     }
@@ -120,7 +120,7 @@ export class ScatterTransform implements IChartTransform {
         return (
             this.hasTimeline &&
             !this.chart.props.hideRelativeToggle &&
-            this.xOverrideYear === undefined
+            this.xOverrideMoment === undefined
         )
     }
 
@@ -178,45 +178,25 @@ export class ScatterTransform implements IChartTransform {
         return entities
     }
 
-    // The years for which there MAY be data on the scatterplot
-    // Not all of these will necessarily end up on the timeline, because there may be no x/y entity overlap for that year
+    // The moments for which there MAY be data on the scatterplot
+    // Not all of these will necessarily end up on the timeline, because there may be no x/y entity overlap for that moment
     // e.g. https://ourworldindata.org/grapher/life-expectancy-years-vs-real-gdp-per-capita-2011us
-    @computed get possibleDataYears(): number[] {
-        const yDimensionYears = this.yDimension ? this.yDimension.yearsUniq : []
-        const xDimensionYears = this.xDimension ? this.xDimension.yearsUniq : []
+    @computed get possibleDataMoments(): number[] {
+        const yDimensionMoments = this.yDimension
+            ? this.yDimension.momentsUniq
+            : []
+        const xDimensionMoments = this.xDimension
+            ? this.xDimension.momentsUniq
+            : []
 
-        if (this.xOverrideYear !== undefined) return yDimensionYears
-        else return intersection(yDimensionYears, xDimensionYears)
+        if (this.xOverrideMoment !== undefined) return yDimensionMoments
+        else return intersection(yDimensionMoments, xDimensionMoments)
     }
 
-    // The years for which we intend to calculate output data
-    @computed get yearsToCalculate(): number[] {
-        return this.possibleDataYears
-
-        // XXX: Causes issues here https://ourworldindata.org/grapher/fish-consumption-vs-gdp-per-capita
-        /*if (!this.chart.props.hideTimeline) {
-            return this.possibleDataYears
-        } else {
-            // If there's no timeline, we only need to calculate data for the displayed range
-            const minPossibleYear = this.possibleDataYears[0]
-            const maxPossibleYear = this.possibleDataYears[this.possibleDataYears.length-1]
-            const startYear = defaultTo(this.chart.timeDomain[0], minPossibleYear)
-            const endYear = defaultTo(this.chart.timeDomain[1], maxPossibleYear)
-            return this.possibleDataYears.filter(y => y >= startYear && y <= endYear)
-        }*/
+    // The moments for which we intend to calculate output data
+    @computed get momentsToCalculate(): number[] {
+        return this.possibleDataMoments
     }
-
-    /*@computed get minTimelineYear(): number {
-        return defaultTo(min(this.timelineYears), 1900)
-    }
-
-    @computed get maxTimelineYear(): number {
-        return defaultTo(max(this.timelineYears), 2000)
-    }*/
-
-    /*@computed get hasTimeline(): boolean {
-        return this.minTimelineYear !== this.maxTimelineYear && !this.chart.props.hideTimeline
-    }*/
 
     @computed get compareEndPointsOnly(): boolean {
         return !!this.chart.props.compareEndPointsOnly
@@ -226,23 +206,26 @@ export class ScatterTransform implements IChartTransform {
         this.chart.props.compareEndPointsOnly = value || undefined
     }
 
-    // Precompute the data transformation for every timeline year (so later animation is fast)
-    // If there's no timeline, this uses the same structure but only computes for a single year
-    @computed get dataByEntityAndYear(): Map<
+    // Precompute the data transformation for every timeline moment (so later animation is fast)
+    // If there's no timeline, this uses the same structure but only computes for a single moment
+    @computed get dataByEntityAndMoment(): Map<
         string,
         Map<number, ScatterValue>
     > {
         const {
             chart,
-            yearsToCalculate,
+            momentsToCalculate,
             colors,
             entitiesToShow,
-            xOverrideYear
+            xOverrideMoment: xOverrideMoment
         } = this
         const { filledDimensions } = chart.data
         const validEntityLookup = keyBy(entitiesToShow)
 
-        const dataByEntityAndYear = new Map<string, Map<number, ScatterValue>>()
+        const dataByEntityAndMoment = new Map<
+            string,
+            Map<number, ScatterValue>
+        >()
 
         for (const dimension of filledDimensions) {
             const tolerance =
@@ -253,10 +236,10 @@ export class ScatterTransform implements IChartTransform {
             // First, we organize the data by entity
             const initialDataByEntity = new Map<
                 string,
-                { years: number[]; values: (string | number)[] }
+                { moments: number[]; values: (string | number)[] }
             >()
-            for (let i = 0; i < dimension.years.length; i++) {
-                const year = dimension.years[i]
+            for (let i = 0; i < dimension.moments.length; i++) {
+                const moment = dimension.moments[i]
                 const value = dimension.values[i]
                 const entity = dimension.entities[i]
 
@@ -271,51 +254,54 @@ export class ScatterTransform implements IChartTransform {
 
                 let byEntity = initialDataByEntity.get(entity)
                 if (!byEntity) {
-                    byEntity = { years: [], values: [] }
+                    byEntity = { moments: [], values: [] }
                     initialDataByEntity.set(entity, byEntity)
                 }
 
-                byEntity.years.push(year)
+                byEntity.moments.push(moment)
                 byEntity.values.push(value)
             }
 
-            // Now go through each entity + timeline year and use a binary search to find the closest
-            // matching data year within tolerance
+            // Now go through each entity + timeline moment and use a binary search to find the closest
+            // matching data moment within tolerance
             initialDataByEntity.forEach((byEntity, entity) => {
-                let dataByYear = dataByEntityAndYear.get(entity)
-                if (dataByYear === undefined) {
-                    dataByYear = new Map()
-                    dataByEntityAndYear.set(entity, dataByYear)
+                let dataByMoment = dataByEntityAndMoment.get(entity)
+                if (dataByMoment === undefined) {
+                    dataByMoment = new Map()
+                    dataByEntityAndMoment.set(entity, dataByMoment)
                 }
 
-                for (const outputYear of yearsToCalculate) {
-                    const targetYear =
-                        xOverrideYear !== undefined &&
+                for (const outputMoment of momentsToCalculate) {
+                    const targetMoment =
+                        xOverrideMoment !== undefined &&
                         dimension.property === "x"
-                            ? xOverrideYear
-                            : outputYear
-                    const i = sortedFindClosestIndex(byEntity.years, targetYear)
-                    const year = byEntity.years[i]
+                            ? xOverrideMoment
+                            : outputMoment
+                    const i = sortedFindClosestIndex(
+                        byEntity.moments,
+                        targetMoment
+                    )
+                    const moment = byEntity.moments[i]
 
-                    // Skip years that aren't within tolerance of the target
+                    // Skip moments that aren't within tolerance of the target
                     if (
-                        year < targetYear - tolerance ||
-                        year > targetYear + tolerance
+                        moment < targetMoment - tolerance ||
+                        moment > targetMoment + tolerance
                     )
                         continue
 
                     const value = byEntity.values[i]
 
-                    let point = dataByYear.get(outputYear)
+                    let point = dataByMoment.get(outputMoment)
                     if (point === undefined) {
                         point = {
-                            year: outputYear,
+                            moment: outputMoment,
                             time: {}
                         } as ScatterValue
-                        dataByYear.set(outputYear, point)
+                        dataByMoment.set(outputMoment, point)
                     }
 
-                    ;(point.time as any)[dimension.property] = year
+                    ;(point.time as any)[dimension.property] = moment
                     if (dimension.property === "color") {
                         point.color = colors.get(value as string)
                     } else {
@@ -326,71 +312,71 @@ export class ScatterTransform implements IChartTransform {
         }
 
         // Exclude any with data for only one axis
-        dataByEntityAndYear.forEach((dataByYear, entity) => {
-            dataByYear.forEach((point, year) => {
+        dataByEntityAndMoment.forEach((dataByMoment, entity) => {
+            dataByMoment.forEach((point, moment) => {
                 if (!has(point, "x") || !has(point, "y"))
-                    dataByYear.delete(year)
+                    dataByMoment.delete(moment)
             })
         })
 
-        return dataByEntityAndYear
+        return dataByEntityAndMoment
     }
 
     @computed get allPoints(): ScatterValue[] {
         const allPoints: ScatterValue[] = []
-        this.dataByEntityAndYear.forEach(dataByYear => {
-            dataByYear.forEach(point => {
+        this.dataByEntityAndMoment.forEach(dataByMoment => {
+            dataByMoment.forEach(point => {
                 allPoints.push(point)
             })
         })
         return allPoints
     }
 
-    // The selectable years that will end up on the timeline UI (if enabled)
-    @computed get timelineYears(): number[] {
-        return sortedUniq(sortBy(this.allPoints.map(point => point.year)))
+    // The selectable moments that will end up on the timeline UI (if enabled)
+    @computed get timelineMoments(): number[] {
+        return sortedUniq(sortBy(this.allPoints.map(point => point.moment)))
     }
 
-    @computed get minTimelineYear(): number {
-        return defaultTo(this.timelineYears[0], -Infinity)
+    @computed get minTimelineMoment(): number {
+        return defaultTo(this.timelineMoments[0], -Infinity)
     }
 
-    @computed get maxTimelineYear(): number {
+    @computed get maxTimelineMoment(): number {
         return defaultTo(
-            this.timelineYears[this.timelineYears.length - 1],
+            this.timelineMoments[this.timelineMoments.length - 1],
             Infinity
         )
     }
 
     @computed get hasTimeline(): boolean {
         return (
-            this.minTimelineYear !== this.maxTimelineYear &&
+            this.minTimelineMoment !== this.maxTimelineMoment &&
             !this.chart.props.hideTimeline
         )
     }
 
-    // The first year of the timeline selection
-    @computed get startYear(): number {
-        const minYear = this.chart.timeDomain[0]
+    // The first moment of the timeline selection
+    @computed get startMoment(): number {
+        const minMoment = this.chart.timeDomain[0]
 
-        if (minYear !== undefined)
+        if (minMoment !== undefined)
             return defaultWith(
-                findClosest(this.timelineYears, minYear),
-                () => this.minTimelineYear
+                findClosest(this.timelineMoments, minMoment),
+                () => this.minTimelineMoment
             )
-        else return this.maxTimelineYear
+        else return this.maxTimelineMoment
     }
 
-    // The end year of the timeline selection
-    @computed get endYear(): number {
-        const maxYear = this.chart.timeDomain[1]
+    // The end moment of the timeline selection
+    @computed get endMoment(): number {
+        const maxMoment = this.chart.timeDomain[1]
 
-        if (maxYear !== undefined)
+        if (maxMoment !== undefined)
             return defaultWith(
-                findClosest(this.timelineYears, maxYear),
-                () => this.maxTimelineYear
+                findClosest(this.timelineMoments, maxMoment),
+                () => this.maxTimelineMoment
             )
-        else return this.maxTimelineYear
+        else return this.maxTimelineMoment
     }
 
     @computed get currentValues(): ScatterValue[] {
@@ -411,8 +397,8 @@ export class ScatterTransform implements IChartTransform {
         if (this.isRelativeMode) {
             let minChange = 0
             let maxChange = 0
-            this.dataByEntityAndYear.forEach(dataByYear => {
-                const values = Array.from(dataByYear.values()).filter(
+            this.dataByEntityAndMoment.forEach(dataByMoment => {
+                const values = Array.from(dataByMoment.values()).filter(
                     v => v.x !== 0 && v.y !== 0
                 )
                 for (let i = 0; i < values.length; i++) {
@@ -445,8 +431,8 @@ export class ScatterTransform implements IChartTransform {
         if (this.isRelativeMode) {
             let minChange = 0
             let maxChange = 0
-            this.dataByEntityAndYear.forEach(dataByYear => {
-                const values = Array.from(dataByYear.values()).filter(
+            this.dataByEntityAndMoment.forEach(dataByMoment => {
+                const values = Array.from(dataByMoment.values()).filter(
                     v => v.x !== 0 && v.y !== 0
                 )
                 for (let i = 0; i < values.length; i++) {
@@ -524,8 +510,8 @@ export class ScatterTransform implements IChartTransform {
 
     @computed get xAxisLabelBase(): string | undefined {
         const xDimName = this.xDimension && this.xDimension.displayName
-        if (this.xOverrideYear !== undefined)
-            return `${xDimName} in ${this.xOverrideYear}`
+        if (this.xOverrideMoment !== undefined)
+            return `${xDimName} in ${this.xOverrideMoment}`
         else return xDimName
     }
 
@@ -581,20 +567,20 @@ export class ScatterTransform implements IChartTransform {
 
         const {
             chart,
-            dataByEntityAndYear,
-            startYear,
-            endYear,
+            dataByEntityAndMoment,
+            startMoment,
+            endMoment,
             xScaleType,
             yScaleType,
             isRelativeMode,
             compareEndPointsOnly,
-            xOverrideYear
+            xOverrideMoment
         } = this
         const { keyColors } = chart.data
         let currentData: ScatterSeries[] = []
 
-        // As needed, join the individual year data points together to create an "arrow chart"
-        dataByEntityAndYear.forEach((dataByYear, entity) => {
+        // As needed, join the individual moment data points together to create an "arrow chart"
+        dataByEntityAndMoment.forEach((dataByMoment, entity) => {
             // Since scatterplots interrelate two variables via entity overlap, their datakeys are solely entity-based
             const datakey = chart.data.keyFor(entity, 0)
 
@@ -606,14 +592,13 @@ export class ScatterTransform implements IChartTransform {
                 values: []
             } as ScatterSeries
 
-            dataByYear.forEach((point, year) => {
-                if (year < startYear || year > endYear) return
+            dataByMoment.forEach((point, moment) => {
+                if (moment < startMoment || moment > endMoment) return
 
                 group.values.push(point)
             })
 
             // Use most recent size and color values
-            const lastPoint = last(group.values)
 
             if (group && group.values.length) {
                 const keyColor = keyColors[datakey]
@@ -636,27 +621,27 @@ export class ScatterTransform implements IChartTransform {
 
         currentData = currentData.map(series => {
             // Only allow tolerance data to occur once in any given chart (no duplicate data points)
-            // Prioritize the start and end years first, then the "true" year
+            // Prioritize the start and end moments first, then the "true" moment
             let values = series.values
 
             values = map(
                 groupBy(values, v => v.time.y),
                 (vals: ScatterValue[]) =>
                     sortBy(vals, v =>
-                        v.year === startYear || v.year === endYear
+                        v.moment === startMoment || v.moment === endMoment
                             ? -Infinity
-                            : Math.abs(v.year - v.time.y)
+                            : Math.abs(v.moment - v.time.y)
                     )[0]
             )
 
-            if (xOverrideYear === undefined) {
+            if (xOverrideMoment === undefined) {
                 values = map(
                     groupBy(values, v => v.time.x),
                     (vals: ScatterValue[]) =>
                         sortBy(vals, v =>
-                            v.year === startYear || v.year === endYear
+                            v.moment === startMoment || v.moment === endMoment
                                 ? -Infinity
-                                : Math.abs(v.year - v.time.x)
+                                : Math.abs(v.moment - v.time.x)
                         )[0]
                 )
             }
@@ -681,8 +666,9 @@ export class ScatterTransform implements IChartTransform {
             // Hide lines which don't cover the full span
             if (this.chart.props.hideLinesOutsideTolerance)
                 return (
-                    firstOfNonEmptyArray(series.values).year === startYear &&
-                    lastOfNonEmptyArray(series.values).year === endYear
+                    firstOfNonEmptyArray(series.values).moment ===
+                        startMoment &&
+                    lastOfNonEmptyArray(series.values).moment === endMoment
                 )
 
             return true
@@ -705,7 +691,7 @@ export class ScatterTransform implements IChartTransform {
                         x: cagrX(indexValue, targetValue),
                         y: cagrY(indexValue, targetValue),
                         size: targetValue.size,
-                        year: targetValue.year,
+                        moment: targetValue.moment,
                         time: {
                             y: targetValue.time.y,
                             x: targetValue.time.x,
@@ -721,38 +707,44 @@ export class ScatterTransform implements IChartTransform {
 }
 
 function cagrX(indexValue: ScatterValue, targetValue: ScatterValue) {
-    if (targetValue.year - indexValue.year === 0) return 0
+    if (targetValue.moment - indexValue.moment === 0) return 0
     else {
         const frac = targetValue.x / indexValue.x
         if (frac < 0)
             return (
                 -(
-                    Math.pow(-frac, 1 / (targetValue.year - indexValue.year)) -
-                    1
+                    Math.pow(
+                        -frac,
+                        1 / (targetValue.moment - indexValue.moment)
+                    ) - 1
                 ) * 100
             )
         else
             return (
-                (Math.pow(frac, 1 / (targetValue.year - indexValue.year)) - 1) *
+                (Math.pow(frac, 1 / (targetValue.moment - indexValue.moment)) -
+                    1) *
                 100
             )
     }
 }
 
 function cagrY(indexValue: ScatterValue, targetValue: ScatterValue) {
-    if (targetValue.year - indexValue.year === 0) return 0
+    if (targetValue.moment - indexValue.moment === 0) return 0
     else {
         const frac = targetValue.y / indexValue.y
         if (frac < 0)
             return (
                 -(
-                    Math.pow(-frac, 1 / (targetValue.year - indexValue.year)) -
-                    1
+                    Math.pow(
+                        -frac,
+                        1 / (targetValue.moment - indexValue.moment)
+                    ) - 1
                 ) * 100
             )
         else
             return (
-                (Math.pow(frac, 1 / (targetValue.year - indexValue.year)) - 1) *
+                (Math.pow(frac, 1 / (targetValue.moment - indexValue.moment)) -
+                    1) *
                 100
             )
     }

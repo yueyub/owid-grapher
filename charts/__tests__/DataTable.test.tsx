@@ -1,7 +1,7 @@
 import * as React from "react"
 import { shallow, ShallowWrapper } from "enzyme"
 
-import { DataTable, ClosestYearNotice } from "../DataTable"
+import { DataTable, ClosestMomentNotice } from "../DataTable"
 import { ChartConfig, ChartConfigProps } from "../ChartConfig"
 import * as fixtures from "test/fixtures"
 
@@ -71,7 +71,7 @@ describe(DataTable, () => {
         })
     })
 
-    describe("when you select a range of years", () => {
+    describe("when you select a range of moments", () => {
         beforeAll(() => {
             const chart = setupChart(677, 104402, {
                 type: "LineChart",
@@ -118,7 +118,7 @@ describe(DataTable, () => {
             view = shallow(<DataTable chart={chart} />)
         })
 
-        it("renders no value when data is not available for years within the tolerance", () => {
+        it("renders no value when data is not available for moments within the tolerance", () => {
             const cell = view
                 .find("tbody .dimension")
                 .at(1)
@@ -126,13 +126,13 @@ describe(DataTable, () => {
             expect(cell.text()).toBe("")
         })
 
-        it("renders a tolerance notice when data is not from targetYear", () => {
+        it("renders a tolerance notice when data is not from targetMoment", () => {
             const notice = view
                 .find("tbody tr td.dimension")
                 .first()
-                .find(ClosestYearNotice)
+                .find(ClosestMomentNotice)
             expect(notice.prop("year")).toBe(2013)
-            expect(notice.prop("targetYear")).toBe(2016)
+            expect(notice.prop("targetMoment")).toBe(2016)
         })
     })
 })

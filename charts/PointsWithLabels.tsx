@@ -48,7 +48,7 @@ export interface ScatterValue {
     y: number
     size: number
     color?: string
-    year: number
+    moment: number
     time: {
         x: number
         y: number
@@ -108,7 +108,7 @@ interface ScatterLabel {
     isEnd?: boolean
 }
 
-// When there's only a single point in a group (e.g. single year mode)
+// When there's only a single point in a group (e.g. single moment mode)
 @observer
 class ScatterGroupSingle extends React.Component<{
     group: ScatterRenderSeries
@@ -348,9 +348,9 @@ export class PointsWithLabels extends React.Component<PointsWithLabelsProps> {
         return priority
     }
 
-    // Create the start year label for a series
+    // Create the start moment label for a series
     makeStartLabel(series: ScatterRenderSeries): ScatterLabel | undefined {
-        // No room to label the year if it's a single point
+        // No room to label the moment if it's a single point
         if (!series.isForeground || series.values.length <= 1) return undefined
 
         const { labelFontFamily } = this

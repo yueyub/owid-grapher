@@ -52,52 +52,52 @@ export class SlopeChartTransform implements IChartTransform {
         return this.colors.colorables
     }
 
-    @computed get timelineYears(): number[] {
+    @computed get timelineMoments(): number[] {
         return union(
-            ...this.chart.data.axisDimensions.map(d => d.variable.yearsUniq)
+            ...this.chart.data.axisDimensions.map(d => d.variable.momentsUniq)
         )
     }
 
-    @computed get minTimelineYear(): number {
-        return defaultTo(min(this.timelineYears), 1900)
+    @computed get minTimelineMoment(): number {
+        return defaultTo(min(this.timelineMoments), 1900)
     }
 
-    @computed get maxTimelineYear(): number {
-        return defaultTo(max(this.timelineYears), 2000)
+    @computed get maxTimelineMoment(): number {
+        return defaultTo(max(this.timelineMoments), 2000)
     }
 
     @computed get hasTimeline(): boolean {
         return (
-            this.minTimelineYear !== this.maxTimelineYear &&
-            this.timelineYears.length > 2 &&
+            this.minTimelineMoment !== this.maxTimelineMoment &&
+            this.timelineMoments.length > 2 &&
             !this.chart.props.hideTimeline
         )
     }
 
-    @computed get startYear(): number {
-        const minYear = defaultWith(
+    @computed get startMoment(): number {
+        const minMoment = defaultWith(
             this.chart.timeDomain[0],
-            () => this.minTimelineYear
+            () => this.minTimelineMoment
         )
         return defaultWith(
-            findClosest(this.timelineYears, minYear),
-            () => this.minTimelineYear
+            findClosest(this.timelineMoments, minMoment),
+            () => this.minTimelineMoment
         )
     }
 
-    @computed get endYear(): number {
-        const maxYear = defaultWith(
+    @computed get endMoment(): number {
+        const maxMoment = defaultWith(
             this.chart.timeDomain[1],
-            () => this.maxTimelineYear
+            () => this.maxTimelineMoment
         )
         return defaultWith(
-            findClosest(this.timelineYears, maxYear),
-            () => this.maxTimelineYear
+            findClosest(this.timelineMoments, maxMoment),
+            () => this.maxTimelineMoment
         )
     }
 
     @computed.struct get xDomain(): [number, number] {
-        return [this.startYear, this.endYear]
+        return [this.startMoment, this.endMoment]
     }
 
     @computed.struct get sizeDim(): DimensionWithData | undefined {
@@ -125,9 +125,9 @@ export class SlopeChartTransform implements IChartTransform {
         const colorByEntity = new Map<string, any>()
 
         if (colorDimension !== undefined) {
-            colorDimension.valueByEntityAndYear.forEach(
-                (yearToColorMap, entity) => {
-                    const values = Array.from(yearToColorMap.values())
+            colorDimension.valueByEntityAndMoment.forEach(
+                (momentToColorMap, entity) => {
+                    const values = Array.from(momentToColorMap.values())
                     const key = values[0].toString()
                     colorByEntity.set(entity, colors.get(key))
                 }
@@ -145,10 +145,12 @@ export class SlopeChartTransform implements IChartTransform {
         const sizeByEntity = new Map<string, any>()
 
         if (sizeDim !== undefined) {
-            sizeDim.valueByEntityAndYear.forEach((yearToSizeMap, entity) => {
-                const values = Array.from(yearToSizeMap.values())
-                sizeByEntity.set(entity, values[0]) // hack: default to the value associated with the first year
-            })
+            sizeDim.valueByEntityAndMoment.forEach(
+                (momentToSizeMap, entity) => {
+                    const values = Array.from(momentToSizeMap.values())
+                    sizeByEntity.set(entity, values[0]) // hack: default to the value associated with the first moment
+                }
+            )
         }
         return sizeByEntity
     }
@@ -174,18 +176,18 @@ export class SlopeChartTransform implements IChartTransform {
         const { keyColors } = chart.data
         const entityKey = this.chart.vardata.entityMetaByKey
 
-        const minYear = Math.max(xDomain[0])
-        const maxYear = Math.min(xDomain[1])
+        const minMoment = Math.max(xDomain[0])
+        const maxMoment = Math.min(xDomain[1])
 
         const entities = yDimension.entitiesUniq
         let data: SlopeChartSeries[] = entities.map(entity => {
             const slopeValues: SlopeChartValue[] = []
-            const yValues = yDimension.valueByEntityAndYear.get(entity)
+            const yValues = yDimension.valueByEntityAndMoment.get(entity)
             if (yValues !== undefined) {
-                yValues.forEach((value, year) => {
-                    if (year === minYear || year === maxYear) {
+                yValues.forEach((value, moment) => {
+                    if (moment === minMoment || moment === maxMoment) {
                         slopeValues.push({
-                            x: year,
+                            x: moment,
                             y:
                                 typeof value === "string"
                                     ? parseInt(value)

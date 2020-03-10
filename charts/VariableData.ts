@@ -12,15 +12,12 @@ import {
     values,
     each,
     sortBy,
+    formatMoment,
     fetchJSON
 } from "./Util"
 import { ChartConfig } from "./ChartConfig"
 import { observable, computed, action, reaction } from "mobx"
 import { BAKED_GRAPHER_URL } from "settings"
-
-function formatYear(year: number): string {
-    return year < 0 ? `${Math.abs(year)} BCE` : `${year}`
-}
 
 // XXX
 declare var window: { admin: any }
@@ -50,7 +47,7 @@ export interface DataForChart {
                 additionalInfo: string
             }
 
-            years: number[]
+            moments: number[]
             entities: number[]
             values: (number | string)[]
         }
@@ -90,7 +87,7 @@ export class Variable {
         retrievedDate: string
         additionalInfo: string
     }
-    @observable.ref years: number[] = []
+    @observable.ref moments: number[] = []
     @observable.ref entities: string[] = []
     @observable.ref values: (string | number)[] = []
 
@@ -107,10 +104,10 @@ export class Variable {
     }
 
     @computed get timespan(): string {
-        const minYear = min(this.years)
-        const maxYear = max(this.years)
-        if (minYear !== undefined && maxYear !== undefined) {
-            return `${formatYear(minYear)} – ${formatYear(maxYear)}`
+        const minMoment = min(this.moments)
+        const maxMoment = max(this.moments)
+        if (minMoment !== undefined && maxMoment !== undefined) {
+            return `${formatMoment(minMoment)} – ${formatMoment(maxMoment)}`
         }
         return ""
     }
@@ -135,16 +132,16 @@ export class Variable {
         return uniq(this.entities)
     }
 
-    @computed get yearsUniq(): number[] {
-        return sortedUniq(this.years)
+    @computed get momentsUniq(): number[] {
+        return sortedUniq(this.moments)
     }
 
-    @computed get minYear(): number {
-        return min(this.yearsUniq) as number
+    @computed get minMoment(): number {
+        return min(this.momentsUniq) as number
     }
 
-    @computed get maxYear(): number {
-        return max(this.yearsUniq) as number
+    @computed get maxMoment(): number {
+        return max(this.momentsUniq) as number
     }
 
     @computed get minValue(): number {

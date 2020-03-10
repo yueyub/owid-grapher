@@ -21,7 +21,7 @@ import { HeightedLegend, HeightedLegendView } from "./HeightedLegend"
 import { ComparisonLine } from "./ComparisonLine"
 import { Tooltip } from "./Tooltip"
 import { NoData } from "./NoData"
-import { formatYear } from "./Util"
+import { formatMoment } from "./Util"
 import { ChartViewContext, ChartViewContextType } from "./ChartViewContext"
 import { extent } from "d3-array"
 
@@ -131,7 +131,7 @@ export class LineChart extends React.Component<{
                     <tbody>
                         <tr>
                             <td>
-                                <strong>{formatYear(hoverX)}</strong>
+                                <strong>{formatMoment(hoverX)}</strong>
                             </td>
                             <td></td>
                         </tr>
@@ -140,10 +140,10 @@ export class LineChart extends React.Component<{
                                 v => v.x === hoverX
                             )
 
-                            // It sometimes happens that data is missing for some years for a particular
-                            // entity. If the user hovers over these years, we want to show a "No data"
+                            // It sometimes happens that data is missing for some moments for a particular
+                            // entity. If the user hovers over these moments, we want to show a "No data"
                             // notice. However, we only want to show this notice when we are in the middle
-                            // of a time series – when data points exist before and after the current year.
+                            // of a time series – when data points exist before and after the current moment.
                             // Otherwise we want to entirely exclude the entity from the tooltip.
                             if (!value) {
                                 const [startX, endX] = extent(

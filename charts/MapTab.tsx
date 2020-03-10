@@ -11,7 +11,7 @@ import {
     MapEntity
 } from "./ChoroplethMap"
 import { MapLegend, MapLegendView } from "./MapLegend"
-import { getRelativeMouse, formatYear } from "./Util"
+import { getRelativeMouse, formatMoment } from "./Util"
 import { ChartConfig } from "./ChartConfig"
 import { MapConfig } from "./MapConfig"
 import { MapLegendBin } from "./MapData"
@@ -29,8 +29,8 @@ import { LoadingChart } from "./LoadingChart"
 interface MapWithLegendProps {
     bounds: Bounds
     choroplethData: ChoroplethData
-    years: number[]
-    inputYear?: number
+    moments: number[]
+    inputMoment?: number
     legendData: MapLegendBin[]
     legendTitle: string
     projection: MapProjection
@@ -100,11 +100,11 @@ class MapWithLegend extends React.Component<MapWithLegendProps> {
     }
 
     @action.bound onTargetChange({
-        targetStartYear
+        targetStartMoment
     }: {
-        targetStartYear: number
+        targetStartMoment: number
     }) {
-        this.context.chart.map.targetYear = targetStartYear
+        this.context.chart.map.targetMoment = targetStartMoment
     }
 
     @action.bound onLegendMouseLeave() {
@@ -114,7 +114,7 @@ class MapWithLegend extends React.Component<MapWithLegendProps> {
     @computed get hasTimeline(): boolean {
         return (
             !this.context.chart.map.props.hideTimeline &&
-            this.props.years.length > 1 &&
+            this.props.moments.length > 1 &&
             !this.context.chartView.isExport
         )
     }
@@ -176,7 +176,7 @@ class MapWithLegend extends React.Component<MapWithLegendProps> {
             projection,
             defaultFill,
             bounds,
-            inputYear,
+            inputMoment,
             mapToDataEntities
         } = this.props
         const {
@@ -235,16 +235,19 @@ class MapWithLegend extends React.Component<MapWithLegendProps> {
                                     ? this.context.chart.map.data.formatTooltipValue(
                                           tooltipDatum.value
                                       )
-                                    : `No data for ${inputYear}`}
+                                    : `No data for ${inputMoment}`}
                             </span>
                             <br />
-                            {tooltipDatum && tooltipDatum.year !== inputYear && (
-                                <div>
-                                    in
-                                    <br />
-                                    <span>{formatYear(tooltipDatum.year)}</span>
-                                </div>
-                            )}
+                            {tooltipDatum &&
+                                tooltipDatum.moment !== inputMoment && (
+                                    <div>
+                                        in
+                                        <br />
+                                        <span>
+                                            {formatMoment(tooltipDatum.moment)}
+                                        </span>
+                                    </div>
+                                )}
                         </div>
                         {this.isEntityClickable && (
                             <div>
@@ -304,8 +307,8 @@ export class MapTab extends React.Component<MapTabProps> {
                     <MapWithLegend
                         bounds={layout.innerBounds}
                         choroplethData={map.data.choroplethData}
-                        years={map.data.timelineYears}
-                        inputYear={map.data.targetYear}
+                        moments={map.data.timelineMoments}
+                        inputMoment={map.data.targetMoment}
                         legendData={map.data.legendData}
                         legendTitle={map.data.legendTitle}
                         projection={map.projection}

@@ -11,7 +11,7 @@ import {
     max,
     defaultTo,
     findClosest,
-    formatYear,
+    formatMoment,
     uniq
 } from "./Util"
 import { ChartConfig } from "./ChartConfig"
@@ -57,56 +57,54 @@ export class StackedBarTransform implements IChartTransform {
         )
     }
 
-    @computed get targetYear(): number {
-        const maxYear = this.chart.timeDomain[1]
+    @computed get targetMoment(): number {
+        const maxMoment = this.chart.timeDomain[1]
         if (!this.primaryDimension) return 1900
 
         const { variable } = this.primaryDimension
-        if (maxYear !== undefined)
-            return sortBy(variable.yearsUniq, year =>
-                Math.abs(year - maxYear)
+        if (maxMoment !== undefined)
+            return sortBy(variable.momentsUniq, moment =>
+                Math.abs(moment - maxMoment)
             )[0]
-        else return max(variable.yearsUniq) as number
+        else return max(variable.momentsUniq) as number
     }
 
-    @computed get timelineYears(): number[] {
+    @computed get timelineMoments(): number[] {
         if (this.primaryDimension === undefined) return []
-        return this.primaryDimension.yearsUniq
+        return this.primaryDimension.momentsUniq
     }
 
-    @computed get minTimelineYear(): number {
-        return defaultTo(min(this.timelineYears), 1900)
+    @computed get minTimelineMoment(): number {
+        return defaultTo(min(this.timelineMoments), 1900)
     }
 
-    @computed get maxTimelineYear(): number {
-        return defaultTo(max(this.timelineYears), 2000)
+    @computed get maxTimelineMoment(): number {
+        return defaultTo(max(this.timelineMoments), 2000)
     }
 
-    @computed get startYear(): number {
-        const minYear = defaultTo(
+    @computed get startMoment(): number {
+        const minMoment = defaultTo(
             this.chart.timeDomain[0],
-            this.minTimelineYear
+            this.minTimelineMoment
         )
         return defaultTo(
-            findClosest(this.timelineYears, minYear),
-            this.minTimelineYear
+            findClosest(this.timelineMoments, minMoment),
+            this.minTimelineMoment
         )
     }
 
-    @computed get endYear(): number {
-        const maxYear = defaultTo(
+    @computed get endMoment(): number {
+        const maxMoment = defaultTo(
             this.chart.timeDomain[1],
-            this.maxTimelineYear
+            this.maxTimelineMoment
         )
         return defaultTo(
-            findClosest(this.timelineYears, maxYear),
-            this.maxTimelineYear
+            findClosest(this.timelineMoments, maxMoment),
+            this.maxTimelineMoment
         )
     }
 
     @computed get barValueFormat(): (datum: StackedBarValue) => string {
-        const { primaryDimension, targetYear } = this
-
         return (datum: StackedBarValue) => {
             return datum.y.toString()
         }
@@ -130,14 +128,14 @@ export class StackedBarTransform implements IChartTransform {
     // }
 
     @computed get xDomainDefault(): [number, number] {
-        return [this.startYear, this.endYear]
+        return [this.startMoment, this.endMoment]
     }
 
     // TODO: Make XAxis generic
     @computed get xAxisSpec(): AxisSpec {
         const { chart, xDomainDefault } = this
         return extend(chart.xAxis.toSpec({ defaultDomain: xDomainDefault }), {
-            tickFormat: (year: number) => formatYear(year),
+            tickFormat: (moment: number) => formatMoment(moment),
             hideFractionalTicks: true,
             hideGridlines: true
         }) as AxisSpec
@@ -180,7 +178,7 @@ export class StackedBarTransform implements IChartTransform {
     }
 
     @computed get groupedData(): StackedBarSeries[] {
-        const { chart, timelineYears } = this
+        const { chart, timelineMoments } = this
         const { filledDimensions, selectedKeys, selectedKeysByKey } = chart.data
 
         let groupedData: StackedBarSeries[] = []
@@ -188,8 +186,8 @@ export class StackedBarTransform implements IChartTransform {
         filledDimensions.forEach((dimension, dimIndex) => {
             const seriesByKey = new Map<DataKey, StackedBarSeries>()
 
-            for (let i = 0; i <= dimension.years.length; i += 1) {
-                const year = dimension.years[i]
+            for (let i = 0; i <= dimension.moments.length; i += 1) {
+                const moment = dimension.moments[i]
                 const entity = dimension.entities[i]
                 const value = +dimension.values[i]
                 const datakey = chart.data.keyFor(entity, dimIndex)
@@ -201,8 +199,8 @@ export class StackedBarTransform implements IChartTransform {
                 if (isNaN(value)) continue
                 // Stacked bar chart can't go negative!
                 if (value < 0) continue
-                // only consider years that are part of timeline to line up the bars
-                if (!includes(timelineYears, year)) continue
+                // only consider moments that are part of timeline to line up the bars
+                if (!includes(timelineMoments, moment)) continue
 
                 if (!series) {
                     series = {
@@ -214,7 +212,7 @@ export class StackedBarTransform implements IChartTransform {
                     seriesByKey.set(datakey, series)
                 }
                 series.values.push({
-                    x: year,
+                    x: moment,
                     y: value,
                     yOffset: 0,
                     isFake: false,
@@ -227,20 +225,20 @@ export class StackedBarTransform implements IChartTransform {
             ])
         })
 
-        // Now ensure that every series has a value entry for every year in the data
+        // Now ensure that every series has a value entry for every moment in the data
         groupedData.forEach(series => {
             let i = 0
 
-            while (i < timelineYears.length) {
+            while (i < timelineMoments.length) {
                 const value = series.values[i] as StackedBarValue | undefined
-                const expectedYear = timelineYears[i]
+                const expectedMoment = timelineMoments[i]
 
-                if (value === undefined || value.x > timelineYears[i]) {
-                    // console.log("series " + series.key + " needs fake bar for " + expectedYear)
+                if (value === undefined || value.x > timelineMoments[i]) {
+                    // console.log("series " + series.key + " needs fake bar for " + expectedMoment)
 
                     const fakeY = 0
                     series.values.splice(i, 0, {
-                        x: expectedYear,
+                        x: expectedMoment,
                         y: fakeY,
                         yOffset: 0,
                         isFake: true,
@@ -289,14 +287,14 @@ export class StackedBarTransform implements IChartTransform {
 
     // Apply time filtering and stacking
     @computed get stackedData(): StackedBarSeries[] {
-        const { groupedData, startYear, endYear } = this
+        const { groupedData, startMoment, endMoment: endMoment } = this
 
         const stackedData = cloneDeep(groupedData)
 
         for (const series of stackedData) {
             series.color = this.colors.get(series.key)
             series.values = series.values.filter(
-                v => v.x >= startYear && v.x <= endYear
+                v => v.x >= startMoment && v.x <= endMoment
             )
         }
 

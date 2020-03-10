@@ -51,7 +51,7 @@ export class Header {
         const maxWidth = props.maxWidth - logoWidth - 20
         // HACK (Mispy): Stop the title jumping around during timeline transitions
         if (
-            props.chart.data.minYear === props.chart.data.maxYear &&
+            props.chart.data.minMoment === props.chart.data.maxMoment &&
             props.chart.data.isShowingTimeline
         ) {
             titleText = titleText + " in 2000"

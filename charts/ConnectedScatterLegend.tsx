@@ -2,13 +2,13 @@ import * as React from "react"
 import { computed } from "mobx"
 import { Triangle } from "./Marks"
 import { TextWrap } from "./TextWrap"
-import { formatYear } from "./Util"
+import { formatMoment } from "./Util"
 
 interface ConnectedScatterLegendProps {
     maxWidth: number
     fontSize: number
-    startYear: number
-    endYear: number
+    startMoment: number
+    endMoment: number
     endpointsOnly: boolean
 }
 
@@ -31,7 +31,7 @@ export class ConnectedScatterLegend {
     @computed get startLabel() {
         const { props, maxLabelWidth, fontSize } = this
         return new TextWrap({
-            text: formatYear(props.startYear),
+            text: formatMoment(props.startMoment),
             fontSize: fontSize,
             maxWidth: maxLabelWidth
         })
@@ -40,7 +40,7 @@ export class ConnectedScatterLegend {
     @computed get endLabel() {
         const { props, maxLabelWidth, fontSize } = this
         return new TextWrap({
-            text: formatYear(props.endYear),
+            text: formatMoment(props.endMoment),
             fontSize: fontSize,
             maxWidth: maxLabelWidth
         })

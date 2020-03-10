@@ -29,7 +29,7 @@ import {
 import { AxisBox, AxisBoxView } from "./AxisBox"
 import { ComparisonLine } from "./ComparisonLine"
 import { ScaleType } from "./AxisScale"
-import { formatYear, first, last } from "./Util"
+import { formatMoment, first, last } from "./Util"
 
 @observer
 export class ScatterPlot extends React.Component<{
@@ -55,13 +55,13 @@ export class ScatterPlot extends React.Component<{
     }
 
     @action.bound onTargetChange({
-        targetStartYear,
-        targetEndYear
+        targetStartMoment,
+        targetEndMoment
     }: {
-        targetStartYear: number
-        targetEndYear: number
+        targetStartMoment: number
+        targetEndMoment: number
     }) {
-        this.chart.timeDomain = [targetStartYear, targetEndYear]
+        this.chart.timeDomain = [targetStartMoment, targetEndMoment]
     }
 
     @action.bound onSelectEntity(datakey: string) {
@@ -165,9 +165,10 @@ export class ScatterPlot extends React.Component<{
 
     @computed get arrowLegend(): ConnectedScatterLegend | undefined {
         const { transform } = this
-        const { startYear, endYear } = transform
+        const { startMoment: startMoment, endMoment: endMoment } = transform
 
-        if (startYear === endYear || transform.isRelativeMode) return undefined
+        if (startMoment === endMoment || transform.isRelativeMode)
+            return undefined
 
         const that = this
         return new ConnectedScatterLegend({
@@ -177,11 +178,11 @@ export class ScatterPlot extends React.Component<{
             get fontSize() {
                 return that.chart.baseFontSize
             },
-            get startYear() {
-                return that.transform.startYear
+            get startMoment() {
+                return that.transform.startMoment
             },
-            get endYear() {
-                return that.transform.endYear
+            get endMoment() {
+                return that.transform.endMoment
             },
             get endpointsOnly() {
                 return that.transform.compareEndPointsOnly
@@ -395,9 +396,6 @@ interface ScatterTooltipProps {
 class ScatterTooltip extends React.Component<ScatterTooltipProps> {
     formatValueY(value: ScatterValue) {
         return "Y Axis: " + this.props.formatY(value.y)
-        //        if (value.year != value.time.y)
-        //            s += " (data from " + value.time.y + ")"
-        // return s
     }
 
     formatValueX(value: ScatterValue) {
@@ -431,20 +429,20 @@ class ScatterTooltip extends React.Component<ScatterTooltipProps> {
         offset += heading.wrap.height + lineHeight
 
         values.forEach(v => {
-            const year = {
+            const moment = {
                 x: x,
                 y: y + offset,
                 wrap: new TextWrap({
                     maxWidth: maxWidth,
                     fontSize: 0.65 * fontSize,
                     text: v.time.span
-                        ? `${formatYear(v.time.span[0])} to ${formatYear(
+                        ? `${formatMoment(v.time.span[0])} to ${formatMoment(
                               v.time.span[1]
                           )}`
-                        : formatYear(v.time.y)
+                        : formatMoment(v.time.y)
                 })
             }
-            offset += year.wrap.height
+            offset += moment.wrap.height
             const line1 = {
                 x: x,
                 y: y + offset,
@@ -465,7 +463,7 @@ class ScatterTooltip extends React.Component<ScatterTooltipProps> {
                 })
             }
             offset += line2.wrap.height + lineHeight
-            elements.push(...[year, line1, line2])
+            elements.push(...[moment, line1, line2])
         })
 
         return (

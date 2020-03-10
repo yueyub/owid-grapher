@@ -9,7 +9,7 @@ import { Color } from "./Color"
 // It wraps the map property on ChartConfig.
 export class MapConfigProps {
     @observable.ref variableId?: number
-    @observable.ref targetYear?: number
+    @observable.ref targetMoment?: number
     @observable.ref timeTolerance?: number
     @observable.ref hideTimeline?: true
     // Key for a colorbrewer scheme, may then be further customized
@@ -105,8 +105,8 @@ export class MapConfig {
         return new MapData(this.chart)
     }
 
-    set targetYear(value: number) {
-        this.props.targetYear = value
+    set targetMoment(value: number) {
+        this.props.targetMoment = value
     }
 
     constructor(chart: ChartConfig) {

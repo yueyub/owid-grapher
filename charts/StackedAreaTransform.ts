@@ -17,7 +17,7 @@ import { DataKey } from "./DataKey"
 import { StackedAreaSeries, StackedAreaValue } from "./StackedArea"
 import { AxisSpec } from "./AxisSpec"
 import { ColorSchemes, ColorScheme } from "./ColorSchemes"
-import { formatValue, formatYear, defaultTo, findClosest } from "./Util"
+import { formatValue, formatMoment, defaultTo, findClosest } from "./Util"
 import { IChartTransform } from "./IChartTransform"
 
 // Responsible for translating chart configuration into the form
@@ -46,7 +46,7 @@ export class StackedAreaTransform implements IChartTransform {
     }
 
     // Get the data for each stacked area series, cleaned to ensure every series
-    // "lines up" i.e. has a data point for every year
+    // "lines up" i.e. has a data point for every moment
     @computed get groupedData(): StackedAreaSeries[] {
         const { chart } = this
         const { filledDimensions, selectedKeys, selectedKeysByKey } = chart.data
@@ -57,8 +57,8 @@ export class StackedAreaTransform implements IChartTransform {
         filledDimensions.forEach((dimension, dimIndex) => {
             const seriesByKey = new Map<DataKey, StackedAreaSeries>()
 
-            for (let i = 0; i < dimension.years.length; i++) {
-                const year = dimension.years[i]
+            for (let i = 0; i < dimension.moments.length; i++) {
+                const moment = dimension.moments[i]
                 const value = +dimension.values[i]
                 const entity = dimension.entities[i]
                 const datakey = chart.data.keyFor(entity, dimIndex)
@@ -81,7 +81,7 @@ export class StackedAreaTransform implements IChartTransform {
                     seriesByKey.set(datakey, series)
                 }
 
-                series.values.push({ x: year, y: value, time: year })
+                series.values.push({ x: moment, y: value, time: moment })
             }
 
             groupedData = groupedData.concat([
@@ -89,22 +89,22 @@ export class StackedAreaTransform implements IChartTransform {
             ])
         })
 
-        // Now ensure that every series has a value entry for every year in the data
-        let allYears: number[] = []
+        // Now ensure that every series has a value entry for every moment in the data
+        let allMoments: number[] = []
         groupedData.forEach(series =>
-            allYears.push(...series.values.map(d => d.x))
+            allMoments.push(...series.values.map(d => d.x))
         )
-        allYears = sortedUniq(sortBy(allYears))
+        allMoments = sortedUniq(sortBy(allMoments))
 
         groupedData.forEach(series => {
             let i = 0
             let isBeforeStart = true
 
-            while (i < allYears.length) {
+            while (i < allMoments.length) {
                 const value = series.values[i] as StackedAreaValue | undefined
-                const expectedYear = allYears[i]
+                const expectedMoment = allMoments[i]
 
-                if (value === undefined || value.x > allYears[i]) {
+                if (value === undefined || value.x > allMoments[i]) {
                     let fakeY = NaN
 
                     if (!isBeforeStart && i < series.values.length) {
@@ -115,9 +115,9 @@ export class StackedAreaTransform implements IChartTransform {
                     }
 
                     series.values.splice(i, 0, {
-                        x: expectedYear,
+                        x: expectedMoment,
                         y: fakeY,
-                        time: expectedYear,
+                        time: expectedMoment,
                         isFake: true
                     })
                 } else {
@@ -127,7 +127,7 @@ export class StackedAreaTransform implements IChartTransform {
             }
         })
 
-        // Strip years at start and end where we couldn't successfully interpolate
+        // Strip moments at start and end where we couldn't successfully interpolate
         for (const firstSeries of groupedData.slice(0, 1)) {
             for (let i = firstSeries.values.length - 1; i >= 0; i--) {
                 if (groupedData.some(series => isNaN(series.values[i].y))) {
@@ -153,7 +153,7 @@ export class StackedAreaTransform implements IChartTransform {
                 chart.data.keyColors[series.key] || colorScale(series.key)
         })
 
-        // In relative mode, transform data to be a percentage of the total for that year
+        // In relative mode, transform data to be a percentage of the total for that moment
         if (this.isRelative) {
             if (groupedData.length === 0) return []
 
@@ -171,38 +171,38 @@ export class StackedAreaTransform implements IChartTransform {
         return groupedData
     }
 
-    @computed get timelineYears(): number[] {
-        // Since we've already aligned the data, the years of any series corresponds to the years of all of them
+    @computed get timelineMoments(): number[] {
+        // Since we've already aligned the data, the moments of any series corresponds to the moments of all of them
         return this.groupedData[0].values.map(v => v.x)
     }
 
-    @computed get minTimelineYear(): number {
-        return defaultTo(min(this.timelineYears), 1900)
+    @computed get minTimelineMoment(): number {
+        return defaultTo(min(this.timelineMoments), 1900)
     }
 
-    @computed get maxTimelineYear(): number {
-        return defaultTo(max(this.timelineYears), 2000)
+    @computed get maxTimelineMoment(): number {
+        return defaultTo(max(this.timelineMoments), 2000)
     }
 
-    @computed get startYear(): number {
-        const minYear = defaultTo(
+    @computed get startMoment(): number {
+        const minMoment = defaultTo(
             this.chart.timeDomain[0],
-            this.minTimelineYear
+            this.minTimelineMoment
         )
         return defaultTo(
-            findClosest(this.timelineYears, minYear),
-            this.minTimelineYear
+            findClosest(this.timelineMoments, minMoment),
+            this.minTimelineMoment
         )
     }
 
-    @computed get endYear(): number {
-        const maxYear = defaultTo(
+    @computed get endMoment(): number {
+        const maxMoment = defaultTo(
             this.chart.timeDomain[1],
-            this.maxTimelineYear
+            this.maxTimelineMoment
         )
         return defaultTo(
-            findClosest(this.timelineYears, maxYear),
-            this.maxTimelineYear
+            findClosest(this.timelineMoments, maxMoment),
+            this.maxTimelineMoment
         )
     }
 
@@ -229,12 +229,12 @@ export class StackedAreaTransform implements IChartTransform {
     }
 
     @computed get xDomainDefault(): [number, number] {
-        return [this.startYear, this.endYear]
+        return [this.startMoment, this.endMoment]
     }
 
     // Apply time filtering and stacking
     @computed get stackedData(): StackedAreaSeries[] {
-        const { groupedData, startYear, endYear } = this
+        const { groupedData, startMoment, endMoment } = this
 
         if (
             some(
@@ -252,7 +252,7 @@ export class StackedAreaTransform implements IChartTransform {
 
         for (const series of stackedData) {
             series.values = series.values.filter(
-                v => v.x >= startYear && v.x <= endYear
+                v => v.x >= startMoment && v.x <= endMoment
             )
             for (const value of series.values) {
                 value.origY = value.y
@@ -282,7 +282,7 @@ export class StackedAreaTransform implements IChartTransform {
     @computed get xAxis(): AxisSpec {
         const { chart, xDomainDefault } = this
         return extend(chart.xAxis.toSpec({ defaultDomain: xDomainDefault }), {
-            tickFormat: (year: number) => formatYear(year),
+            tickFormat: (moment: number) => formatMoment(moment),
             hideFractionalTicks: true,
             hideGridlines: true
         }) as AxisSpec

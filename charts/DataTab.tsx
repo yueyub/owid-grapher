@@ -28,8 +28,8 @@ export class DataTab extends React.Component<{
         const entitiesUniq = sortBy(
             uniq(flatten(dimensions.map(d => d.entitiesUniq)))
         ) as string[]
-        const yearsUniq = sortBy(
-            uniq(flatten(dimensions.map(d => d.yearsUniq)))
+        const momentsUniq = sortBy(
+            uniq(flatten(dimensions.map(d => d.momentsUniq)))
         ) as number[]
 
         const rows: string[] = []
@@ -41,17 +41,19 @@ export class DataTab extends React.Component<{
         rows.push(titleRow.join(","))
 
         entitiesUniq.forEach(entity => {
-            yearsUniq.forEach(year => {
+            momentsUniq.forEach(moment => {
                 const row = [
                     entity,
                     vardata.entityMetaByKey[entity].code || "",
-                    year
+                    moment
                 ]
 
                 let rowHasSomeValue = false
                 dimensions.forEach(dim => {
-                    const valueByYear = dim.valueByEntityAndYear.get(entity)
-                    const value = valueByYear ? valueByYear.get(year) : null
+                    const valueByMoment = dim.valueByEntityAndMoment.get(entity)
+                    const value = valueByMoment
+                        ? valueByMoment.get(moment)
+                        : null
 
                     if (value == null) row.push("")
                     else {

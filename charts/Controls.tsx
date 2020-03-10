@@ -312,7 +312,7 @@ class AbsRelToggle extends React.Component<{ chart: ChartConfig }> {
             label = "Average annual change"
         else if (chart.isLineChart) label = "Relative change"
 
-        const supported = !(chart.isLineChart && chart.lineChart.isSingleYear)
+        const supported = !(chart.isLineChart && chart.lineChart.isSingleMoment)
 
         return (
             <label className="clickable">
@@ -331,21 +331,21 @@ class AbsRelToggle extends React.Component<{ chart: ChartConfig }> {
 @observer
 class TimelineControl extends React.Component<{ chart: ChartConfig }> {
     @action.bound onMapTargetChange({
-        targetStartYear
+        targetStartMoment
     }: {
-        targetStartYear: number
+        targetStartMoment: number
     }) {
-        this.props.chart.map.targetYear = targetStartYear
+        this.props.chart.map.targetMoment = targetStartMoment
     }
 
     @action.bound onChartTargetChange({
-        targetStartYear,
-        targetEndYear
+        targetStartMoment,
+        targetEndMoment
     }: {
-        targetStartYear: number
-        targetEndYear: number
+        targetStartMoment: number
+        targetEndMoment: number
     }) {
-        this.props.chart.timeDomain = [targetStartYear, targetEndYear]
+        this.props.chart.timeDomain = [targetStartMoment, targetEndMoment]
     }
 
     @action.bound onTimelineStart() {
@@ -356,13 +356,13 @@ class TimelineControl extends React.Component<{ chart: ChartConfig }> {
         this.props.chart.useTimelineDomains = false
     }
 
-    boundedYears(years: number[]) {
+    private _boundedMoments(moments: number[]) {
         const chartProps = this.props.chart.props
         const min = chartProps.timelineMinTime
         const max = chartProps.timelineMaxTime
-        return years.filter(year => {
-            if (min !== undefined && year < min) return false
-            if (max !== undefined && year > max) return false
+        return moments.filter(moment => {
+            if (min !== undefined && moment < min) return false
+            if (max !== undefined && moment > max) return false
             return true
         })
     }
@@ -371,69 +371,75 @@ class TimelineControl extends React.Component<{ chart: ChartConfig }> {
         const { chart } = this.props
         if (chart.props.tab === "map") {
             const { map } = chart
-            const years = this.boundedYears(map.data.timelineYears)
-            if (years.length === 0 || map.data.targetYear === undefined) {
+            const moments = this._boundedMoments(map.data.timelineMoments)
+            if (moments.length === 0 || map.data.targetMoment === undefined) {
                 return null
             }
             return (
                 <Timeline
-                    years={years}
+                    moments={moments}
                     onTargetChange={this.onMapTargetChange}
-                    startYear={map.data.targetYear}
-                    endYear={map.data.targetYear}
-                    singleYearMode={true}
+                    startMoment={map.data.targetMoment}
+                    endMoment={map.data.targetMoment}
+                    singleMomentMode={true}
                 />
             )
         } else if (chart.isScatter) {
-            const years = this.boundedYears(chart.scatter.timelineYears)
-            if (years.length === 0) return null
+            const moments = this._boundedMoments(chart.scatter.timelineMoments)
+            if (moments.length === 0) return null
             return (
                 <Timeline
-                    years={years}
+                    moments={moments}
                     onTargetChange={this.onChartTargetChange}
-                    startYear={chart.scatter.startYear}
-                    endYear={chart.scatter.endYear}
+                    startMoment={chart.scatter.startMoment}
+                    endMoment={chart.scatter.endMoment}
                     onStartDrag={this.onTimelineStart}
                     onStopDrag={this.onTimelineStop}
                 />
             )
         } else if (chart.isLineChart) {
-            const years = this.boundedYears(chart.lineChart.timelineYears)
-            if (years.length === 0) return null
+            const moments = this._boundedMoments(
+                chart.lineChart.timelineMoments
+            )
+            if (moments.length === 0) return null
             return (
                 <Timeline
-                    years={years}
+                    moments={moments}
                     onTargetChange={this.onChartTargetChange}
-                    startYear={chart.lineChart.startYear}
-                    endYear={chart.lineChart.endYear}
+                    startMoment={chart.lineChart.startMoment}
+                    endMoment={chart.lineChart.endMoment}
                     onStartDrag={this.onTimelineStart}
                     onStopDrag={this.onTimelineStop}
-                    singleYearPlay={true}
+                    singleMomentPlay={true}
                 />
             )
         } else if (chart.isSlopeChart) {
-            const years = this.boundedYears(chart.slopeChart.timelineYears)
-            if (years.length === 0) return null
+            const moments = this._boundedMoments(
+                chart.slopeChart.timelineMoments
+            )
+            if (moments.length === 0) return null
             return (
                 <Timeline
-                    years={years}
+                    moments={moments}
                     onTargetChange={this.onChartTargetChange}
-                    startYear={chart.slopeChart.startYear}
-                    endYear={chart.slopeChart.endYear}
+                    startMoment={chart.slopeChart.startMoment}
+                    endMoment={chart.slopeChart.endMoment}
                     onStartDrag={this.onTimelineStart}
                     onStopDrag={this.onTimelineStop}
                     disablePlay={true}
                 />
             )
         } else {
-            const years = this.boundedYears(chart.lineChart.timelineYears)
-            if (years.length === 0) return null
+            const moments = this._boundedMoments(
+                chart.lineChart.timelineMoments
+            )
+            if (moments.length === 0) return null
             return (
                 <Timeline
-                    years={years}
+                    moments={moments}
                     onTargetChange={this.onChartTargetChange}
-                    startYear={chart.lineChart.startYear}
-                    endYear={chart.lineChart.endYear}
+                    startMoment={chart.lineChart.startMoment}
+                    endMoment={chart.lineChart.endMoment}
                     onStartDrag={this.onTimelineStart}
                     onStopDrag={this.onTimelineStop}
                 />

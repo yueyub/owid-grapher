@@ -17,7 +17,7 @@ import { ControlsOverlay, AddEntityButton } from "./Controls"
 export interface DiscreteBarDatum {
     key: string
     value: number
-    year: number
+    moment: number
     label: string
     color: Color
     formatValue: (value: number, options?: TickFormattingOptions) => string

@@ -17,7 +17,7 @@ import { Tippy } from "./Tippy"
 import {
     DataTableTransform,
     DataTableRow,
-    TargetYearMode,
+    TargetMomentMode,
     SortOrder,
     ColumnKey,
     isSingleValue,
@@ -272,9 +272,9 @@ export class DataTable extends React.Component<DataTableProps> {
                                             this.onSort(dimIndex, column.key)
                                         }
                                     >
-                                        {column.targetYearMode ===
-                                        TargetYearMode.point
-                                            ? column.targetYear
+                                        {column.targetMomentMode ===
+                                        TargetMomentMode.point
+                                            ? column.targetMoment
                                             : columnNameByType[column.key]}
                                         {this.renderSortIcon({
                                             isActive: isSorted
@@ -318,19 +318,19 @@ export class DataTable extends React.Component<DataTableProps> {
                     }
                 ])}
             >
-                {value.year !== undefined &&
-                    column.targetYearMode === TargetYearMode.point &&
-                    column.targetYear !== undefined &&
-                    column.targetYear !== value.year && (
-                        <ClosestYearNotice
-                            year={value.year}
-                            targetYear={column.targetYear}
+                {value.moment !== undefined &&
+                    column.targetMomentMode === TargetMomentMode.point &&
+                    column.targetMoment !== undefined &&
+                    column.targetMoment !== value.moment && (
+                        <ClosestMomentNotice
+                            moment={value.moment}
+                            targetMoment={column.targetMoment}
                         />
                     )}
                 {value.formattedValue}
-                {value.year !== undefined &&
-                    column.targetYearMode === TargetYearMode.range && (
-                        <span className="range-year"> in {value.year}</span>
+                {value.moment !== undefined &&
+                    column.targetMomentMode === TargetMomentMode.range && (
+                        <span className="range-year"> in {value.moment}</span>
                     )}
             </td>
         )
@@ -382,25 +382,25 @@ export class DataTable extends React.Component<DataTableProps> {
     }
 }
 
-export const ClosestYearNotice = ({
-    targetYear,
-    year
+export const ClosestMomentNotice = ({
+    targetMoment,
+    moment
 }: {
-    targetYear: number
-    year: number
+    targetMoment: number
+    moment: number
 }) => (
     <Tippy
         content={
             <div className="closest-year-notice">
-                <strong>Data not available for {targetYear}</strong>
+                <strong>Data not available for {targetMoment}</strong>
                 <br />
-                Showing closest available year ({year})
+                Showing closest available year ({moment})
             </div>
         }
         arrow={false}
     >
         <span className="notice">
-            in {year}{" "}
+            in {moment}{" "}
             <span className="icon">
                 <FontAwesomeIcon icon={faInfoCircle} />
             </span>

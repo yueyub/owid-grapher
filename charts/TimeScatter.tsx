@@ -8,7 +8,7 @@ import { AxisBox, AxisBoxView } from "./AxisBox"
 import { ComparisonLine } from "./ComparisonLine"
 import { ScaleType } from "./AxisScale"
 
-import { sortBy, cloneDeep, isEmpty, guid, formatYear } from "./Util"
+import { sortBy, cloneDeep, isEmpty, guid, formatMoment } from "./Util"
 import { AxisScale } from "./AxisScale"
 import { getRelativeMouse, makeSafeForCSS } from "./Util"
 import { Vector2 } from "./Vector2"
@@ -29,7 +29,7 @@ export interface ScatterValue {
     y: number
     size: number
     color?: string
-    year: number
+    moment: number
     time: {
         x: number
         y: number
@@ -118,11 +118,11 @@ export class PointsWithLabels extends React.Component<PointsWithLabelsProps> {
 
         const value = hoverPoint.value
 
-        const year = value.time.span
-            ? `${formatYear(value.time.span[0])} to ${formatYear(
+        const moment = value.time.span
+            ? `${formatMoment(value.time.span[0])} to ${formatMoment(
                   value.time.span[1]
               )}`
-            : formatYear(value.time.y)
+            : formatMoment(value.time.y)
 
         return (
             <Tooltip
@@ -140,7 +140,7 @@ export class PointsWithLabels extends React.Component<PointsWithLabelsProps> {
                         fontSize: "1em"
                     }}
                 >
-                    {year}
+                    {moment}
                 </h3>
                 <p
                     style={{
@@ -579,13 +579,13 @@ export class TimeScatter extends React.Component<{
     }
 
     @action.bound onTargetChange({
-        targetStartYear,
-        targetEndYear
+        targetStartMoment,
+        targetEndMoment
     }: {
-        targetStartYear: number
-        targetEndYear: number
+        targetStartMoment: number
+        targetEndMoment: number
     }) {
-        this.chart.timeDomain = [targetStartYear, targetEndYear]
+        this.chart.timeDomain = [targetStartMoment, targetEndMoment]
     }
 
     @computed get axisBox() {

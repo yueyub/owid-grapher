@@ -13,7 +13,7 @@ import { worldRegionByMapEntity } from "./WorldRegions"
 
 export interface ChoroplethDatum {
     entity: string
-    year: number
+    moment: number
     value: number | string
     color: string
     highlightFillColor: string

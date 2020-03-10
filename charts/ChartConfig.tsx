@@ -160,8 +160,8 @@ export class ChartConfigProps {
     @observable.ref entityType?: string = undefined
     @observable.ref hideTimeline?: true = undefined
 
-    // Always show year in labels for bar charts
-    @observable.ref showYearLabels?: boolean = undefined
+    // Always show moment in labels for bar charts
+    @observable.ref showMomentLabels?: boolean = undefined
 
     @observable.ref hasChartTab: boolean = true
     @observable.ref hasMapTab: boolean = false
@@ -182,7 +182,7 @@ export class ChartConfigProps {
 
     @observable.ref hideLinesOutsideTolerance?: true = undefined
 
-    // Hides lines between points when timeline spans multiple years. Requested by core-econ for certain charts
+    // Hides lines between points when timeline spans multiple moments. Requested by core-econ for certain charts
     @observable hideConnectedScatterLines?: boolean = undefined
     @observable.ref compareEndPointsOnly?: true = undefined
     @observable.ref matchingEntitiesOnly?: true = undefined

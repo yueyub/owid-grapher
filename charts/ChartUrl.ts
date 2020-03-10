@@ -3,7 +3,7 @@
  *
  * This component is responsible for translating between the
  * the chart and url parameters, to enable nice linking support
- * for specific countries and years.
+ * for specific countries and moments.
  */
 
 import { isNumber, includes, filter, uniq, toString, isFinite } from "./Util"
@@ -27,7 +27,7 @@ export interface ChartQueryParams {
     xScale?: string
     yScale?: string
     time?: string
-    year?: string
+    moment?: string
     region?: string
     country?: string
     shown?: string
@@ -88,7 +88,7 @@ export class ChartUrl implements ObservableUrl {
                 : chart.props.compareEndPointsOnly
                 ? "1"
                 : "0"
-        params.year = this.yearParam
+        params.moment = this.momentParam
         params.time = this.timeParam
         params.country = this.countryParam
 
@@ -117,15 +117,15 @@ export class ChartUrl implements ObservableUrl {
         return this.baseUrl ? this.baseUrl + this.queryStr : undefined
     }
 
-    @computed get yearParam(): string | undefined {
+    @computed get momentParam(): string | undefined {
         const { chart, origChart } = this
 
         if (
             chart.props.map &&
             origChart.map &&
-            chart.props.map.targetYear !== origChart.map.targetYear
+            chart.props.map.targetMoment !== origChart.map.targetMoment
         ) {
-            return toString(chart.props.map.targetYear)
+            return toString(chart.props.map.targetMoment)
         } else {
             return undefined
         }
@@ -243,9 +243,9 @@ export class ChartUrl implements ObservableUrl {
         // Map stuff below
 
         if (chart.props.map) {
-            const year = parseInt(params.year || "")
-            if (!isNaN(year)) {
-                chart.props.map.targetYear = year
+            const moment = parseInt(params.moment || "")
+            if (!isNaN(moment)) {
+                chart.props.map.targetMoment = moment
             }
 
             const region = params.region

@@ -12,7 +12,7 @@ import {
     find,
     extend,
     uniq,
-    formatYear,
+    formatMoment,
     defaultTo,
     slugify,
     lastOfNonEmptyArray
@@ -107,39 +107,35 @@ export class ChartData {
     }
 
     // XXX refactor into the transforms
-    @computed get minYear(): number | undefined {
+    @computed get minMoment(): number | undefined {
         const { chart } = this
-        //if (chart.isScatter && !chart.scatter.failMessage && chart.scatter.xOverrideYear != undefined)
-        //    return undefined
-        if (chart.primaryTab === "map") return chart.map.data.targetYear
+        if (chart.primaryTab === "map") return chart.map.data.targetMoment
         else if (chart.isScatter && !chart.scatter.failMessage)
-            return chart.scatter.startYear
+            return chart.scatter.startMoment
         else if (chart.isDiscreteBar && !chart.discreteBar.failMessage)
-            return chart.discreteBar.targetYear
+            return chart.discreteBar.targetMoment
         else if (
             chart.isLineChart &&
-            chart.lineChart.isSingleYear &&
+            chart.lineChart.isSingleMoment &&
             !chart.discreteBar.failMessage
         )
-            return chart.lineChart.startYear
+            return chart.lineChart.startMoment
         else return undefined
     }
 
-    @computed get maxYear(): number | undefined {
+    @computed get maxMoment(): number | undefined {
         const { chart } = this
-        //if (chart.isScatter && !chart.scatter.failMessage && chart.scatter.xOverrideYear != undefined)
-        //    return undefined
-        if (chart.primaryTab === "map") return chart.map.data.targetYear
+        if (chart.primaryTab === "map") return chart.map.data.targetMoment
         else if (chart.isScatter && !chart.scatter.failMessage)
-            return chart.scatter.endYear
+            return chart.scatter.endMoment
         else if (chart.isDiscreteBar && !chart.discreteBar.failMessage)
-            return chart.discreteBar.targetYear
+            return chart.discreteBar.targetMoment
         else if (
             chart.isLineChart &&
-            chart.lineChart.isSingleYear &&
+            chart.lineChart.isSingleMoment &&
             !chart.discreteBar.failMessage
         )
-            return chart.lineChart.endYear
+            return chart.lineChart.endMoment
         else return undefined
     }
 
@@ -178,14 +174,14 @@ export class ChartData {
         if (
             !chart.props.hideTitleAnnotation ||
             (this.chart.isLineChart &&
-                this.chart.lineChart.isSingleYear &&
+                this.chart.lineChart.isSingleMoment &&
                 this.chart.lineChart.hasTimeline)
         ) {
-            const { minYear, maxYear } = this
-            if (minYear !== undefined) {
-                const timeFrom = formatYear(minYear)
-                const timeTo = formatYear(
-                    maxYear !== undefined ? maxYear : minYear
+            const { minMoment, maxMoment } = this
+            if (minMoment !== undefined) {
+                const timeFrom = formatMoment(minMoment)
+                const timeTo = formatMoment(
+                    maxMoment !== undefined ? maxMoment : minMoment
                 )
                 const time =
                     timeFrom === timeTo ? timeFrom : timeFrom + " to " + timeTo
