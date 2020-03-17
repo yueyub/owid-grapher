@@ -1,13 +1,13 @@
-import { webpack } from "utils/server/staticGen"
+import { ClientSettings } from "clientSettings"
 
-export function embedSnippet(): string {
+export function embedSnippet(clientSettings: ClientSettings): string {
     return `
         window.App = {};
 
         var link = document.createElement('link');
         link.type = 'text/css';
         link.rel = 'stylesheet';
-        link.href = '${webpack("commons.css")}';
+        link.href = '${clientSettings.getWebPackUrl("commons.css")}';
         document.head.appendChild(link);
 
         var hasPolyfill = false;
@@ -30,13 +30,13 @@ export function embedSnippet(): string {
         var script = document.createElement('script');
         script.type = 'text/javascript';
         script.onload = checkReady;
-        script.src = '${webpack("commons.js")}';
+        script.src = '${clientSettings.getWebPackUrl("commons.js")}';
         document.head.appendChild(script);
 
         var script = document.createElement('script');
         script.type = 'text/javascript';
         script.onload = checkReady;
-        script.src = '${webpack("owid.js")}';
+        script.src = '${clientSettings.getWebPackUrl("owid.js")}';
         document.head.appendChild(script);
     `
 }

@@ -3,7 +3,10 @@
 import * as path from "path"
 import * as db from "db/db"
 import * as _ from "lodash"
-import { DB_NAME, DB_USER, DB_PASS, DB_HOST, DB_PORT } from "serverSettings"
+
+import { ServerSettings } from "serverSettings"
+const serverSettings = new ServerSettings()
+const { DB_NAME, DB_USER, DB_PASS, DB_HOST, DB_PORT } = serverSettings
 
 import { exec } from "utils/server/serverUtil"
 

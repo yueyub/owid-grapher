@@ -16,7 +16,10 @@ import {
 } from "./Util"
 import { ChartConfig } from "./ChartConfig"
 import { observable, computed, action, reaction } from "mobx"
-import { BAKED_GRAPHER_URL } from "settings"
+import { ClientSettings } from "clientSettings"
+
+// todo: cleanup
+const clientSettings = new ClientSettings()
 
 // XXX
 declare var window: { admin: any }
@@ -204,9 +207,9 @@ export class VariableData {
             )
             this.receiveData(json)
         } else {
-            const fetchUrl = `${BAKED_GRAPHER_URL}/data/variables/${variableIds.join(
-                "+"
-            )}.json?v=${cacheTag}`
+            const fetchUrl = `${
+                clientSettings.BAKED_GRAPHER_URL
+            }/data/variables/${variableIds.join("+")}.json?v=${cacheTag}`
             const json = await fetchJSON(fetchUrl)
             this.receiveData(json)
         }

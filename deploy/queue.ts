@@ -1,8 +1,5 @@
 import * as fs from "fs-extra"
-import {
-    DEPLOY_QUEUE_FILE_PATH,
-    DEPLOY_PENDING_FILE_PATH
-} from "serverSettings"
+import { ServerSettings } from "serverSettings"
 import { deploy } from "./deploy"
 
 const MAX_SUCCESSIVE_FAILURES = 2
@@ -19,13 +16,18 @@ export interface IDeployQueueItem {
     message?: string
 }
 
-export async function readQueueContent(): Promise<string> {
-    const queueContent = await fs.readFile(DEPLOY_QUEUE_FILE_PATH, "utf8")
+export async function readQueueContent(
+    serverSettings: ServerSettings
+): Promise<string> {
+    const queueContent = await fs.readFile(
+        serverSettings.DEPLOY_QUEUE_FILE_PATH,
+        "utf8"
+    )
     // If any deploys didn't exit cleanly, DEPLOY_PENDING_FILE_PATH would exist.
     // Prepend that message to the current deploy.
-    if (fs.existsSync(DEPLOY_PENDING_FILE_PATH)) {
+    if (fs.existsSync(serverSettings.DEPLOY_PENDING_FILE_PATH)) {
         const deployingContent = await fs.readFile(
-            DEPLOY_PENDING_FILE_PATH,
+            serverSettings.DEPLOY_PENDING_FILE_PATH,
             "utf8"
         )
         return deployingContent + "\n" + queueContent
@@ -34,25 +36,35 @@ export async function readQueueContent(): Promise<string> {
     }
 }
 
-export async function enqueueDeploy(item: IDeployQueueItem) {
-    await fs.appendFile(DEPLOY_QUEUE_FILE_PATH, JSON.stringify(item) + "\n")
+export async function enqueueDeploy(
+    item: IDeployQueueItem,
+    serverSettings: ServerSettings
+) {
+    await fs.appendFile(
+        serverSettings.DEPLOY_QUEUE_FILE_PATH,
+        JSON.stringify(item) + "\n"
+    )
 }
 
-export async function eraseQueueContent() {
-    await fs.truncate(DEPLOY_QUEUE_FILE_PATH, 0)
+export async function eraseQueueContent(serverSettings: ServerSettings) {
+    await fs.truncate(serverSettings.DEPLOY_QUEUE_FILE_PATH, 0)
 }
 
-export async function queueIsEmpty(): Promise<boolean> {
-    return !(await readQueueContent())
+export async function queueIsEmpty(
+    serverSettings: ServerSettings
+): Promise<boolean> {
+    return !(await readQueueContent(serverSettings))
 }
 
-export async function pullQueueContent(): Promise<string> {
+export async function pullQueueContent(
+    serverSettings: ServerSettings
+): Promise<string> {
     // Read line-delimited JSON
-    const queueContent = await readQueueContent()
+    const queueContent = await readQueueContent(serverSettings)
 
     // Truncate file immediately. It's still somewhat possible that another process
     // writes to this file in the meantime...
-    await eraseQueueContent()
+    await eraseQueueContent(serverSettings)
 
     return queueContent
 }
@@ -89,20 +101,26 @@ export function generateCommitMsg(queueItems: IDeployQueueItem[]): string {
     return `Deploy ${date}\n${message}\n\n\n${coauthors}`
 }
 
-export async function triggerDeploy() {
+export async function triggerDeploy(serverSettings: ServerSettings) {
     if (!deploying) {
         deploying = true
         let failures = 0
-        while (!(await queueIsEmpty()) && failures < MAX_SUCCESSIVE_FAILURES) {
-            const deployContent = await pullQueueContent()
+        while (
+            !(await queueIsEmpty(serverSettings)) &&
+            failures < MAX_SUCCESSIVE_FAILURES
+        ) {
+            const deployContent = await pullQueueContent(serverSettings)
             // Write to `.deploying` file to be able to recover the deploy message
             // in case of failure.
-            await fs.writeFile(DEPLOY_PENDING_FILE_PATH, deployContent)
+            await fs.writeFile(
+                serverSettings.DEPLOY_PENDING_FILE_PATH,
+                deployContent
+            )
             const message = generateCommitMsg(parseQueueContent(deployContent))
             console.log(`Deploying site...\n---\n${message}\n---`)
             try {
                 await deploy(message)
-                await fs.unlink(DEPLOY_PENDING_FILE_PATH)
+                await fs.unlink(serverSettings.DEPLOY_PENDING_FILE_PATH)
             } catch (err) {
                 failures++
                 // The error will be logged and sent to Slack.

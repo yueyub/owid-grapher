@@ -2,11 +2,13 @@ import * as React from "react"
 import { observer } from "mobx-react"
 import { ChartEditor } from "./ChartEditor"
 import { computed, action, observable, runInAction } from "mobx"
-import { BAKED_GRAPHER_URL } from "settings"
+import { ClientSettings } from "clientSettings"
 import { ChartRedirect } from "admin/client/ChartEditor"
 import { AdminAppContext, AdminAppContextType } from "./AdminAppContext"
 
-const BASE_URL = BAKED_GRAPHER_URL.replace(/^https?:\/\//, "")
+// todo: cleanup
+const clientSettings = new ClientSettings()
+const BASE_URL = clientSettings.BAKED_GRAPHER_URL.replace(/^https?:\/\//, "")
 
 @observer
 export class EditorReferencesTab extends React.Component<{
@@ -77,7 +79,7 @@ export class EditorReferencesTab extends React.Component<{
                                             {BASE_URL}/
                                         </span>
                                         <a
-                                            href={`${BAKED_GRAPHER_URL}/${redirect.slug}`}
+                                            href={`${clientSettings.BAKED_GRAPHER_URL}/${redirect.slug}`}
                                             target="_blank"
                                         >
                                             <strong>{redirect.slug}</strong>

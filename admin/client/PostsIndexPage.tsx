@@ -8,8 +8,12 @@ import * as _ from "lodash"
 import { AdminLayout } from "./AdminLayout"
 import { SearchField, FieldsRow, EditableTags } from "./Forms"
 import { AdminAppContext, AdminAppContextType } from "./AdminAppContext"
-import { WORDPRESS_URL } from "settings"
 import { Tag } from "./TagBadge"
+
+import { ClientSettings } from "clientSettings"
+// todo: cleanup
+const clientSettings = new ClientSettings()
+const WORDPRESS_URL = clientSettings.WORDPRESS_URL
 
 interface PostIndexMeta {
     id: number

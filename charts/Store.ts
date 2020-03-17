@@ -1,7 +1,7 @@
 import { Indicator } from "./Indicator"
 import { observable, runInAction } from "mobx"
 import { fetchJSON, difference, values } from "./Util"
-import { BAKED_BASE_URL } from "settings"
+import { ClientSettings } from "clientSettings"
 
 export class StoreEntry<EntityType> {
     @observable.ref isLoading: boolean = false
@@ -26,8 +26,10 @@ export class IndicatorStore {
 
     private async fetchAll(): Promise<Indicator[]> {
         try {
+            // Todo: cleanup
+            const clientSettings = new ClientSettings()
             const json = await fetchJSON(
-                `${BAKED_BASE_URL}/explore/indicators.json`
+                `${clientSettings.BAKED_BASE_URL}/explore/indicators.json`
             )
             const indicators: Indicator[] = json.indicators
             return indicators

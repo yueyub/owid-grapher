@@ -5,7 +5,7 @@ import { User } from "db/model/User"
 import { BCryptHasher } from "../../utils/hashers"
 
 import * as db from "db/db"
-import { SECRET_KEY, SESSION_COOKIE_AGE } from "serverSettings"
+import { ServerSettings } from "serverSettings"
 import { JsonError } from "utils/server/serverUtil"
 
 export type CurrentUser = User
@@ -79,15 +79,16 @@ export async function authMiddleware(
     }
 }
 
-function saltedHmac(salt: string, value: string): string {
-    const hmac = crypto.createHmac("sha1", salt + SECRET_KEY)
+function saltedHmac(salt: string, value: string, secretKey: string): string {
+    const hmac = crypto.createHmac("sha1", salt + secretKey)
     hmac.update(value)
     return hmac.digest("hex")
 }
 
 export async function tryLogin(
     email: string,
-    password: string
+    password: string,
+    serverSettings: ServerSettings
 ): Promise<Session> {
     const user = await User.findOne({ email: email })
     if (!user) {
@@ -105,19 +106,23 @@ export async function tryLogin(
             _auth_user_backend: "django.contrib.auth.backends.ModelBackend",
             _auth_user_hash: saltedHmac(
                 "django.contrib.auth.models.AbstractBaseUser.get_session_auth_hash",
-                password
+                password,
+                serverSettings.SECRET_KEY
             )
         })
         const sessionHash = saltedHmac(
             "django.contrib.sessions.SessionStore",
-            sessionJson
+            sessionJson,
+            serverSettings.SECRET_KEY
         )
         const sessionData = Buffer.from(
             `${sessionHash}:${sessionJson}`
         ).toString("base64")
 
         const now = new Date()
-        const expiryDate = new Date(now.getTime() + 1000 * SESSION_COOKIE_AGE)
+        const expiryDate = new Date(
+            now.getTime() + 1000 * serverSettings.SESSION_COOKIE_AGE
+        )
 
         await db.execute(
             `INSERT INTO sessions (session_key, session_data, expire_date) VALUES (?, ?, ?)`,

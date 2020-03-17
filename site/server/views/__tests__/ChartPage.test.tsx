@@ -8,6 +8,7 @@ import { SiteHeader } from "../SiteHeader"
 import { SiteFooter } from "../SiteFooter"
 import { extend } from "charts/Util"
 import { ChartConfigProps } from "charts/ChartConfig"
+import { ClientSettings } from "clientSettings"
 
 import * as fixtures from "test/fixtures"
 
@@ -22,7 +23,15 @@ describe(ChartPage, () => {
     describe("when the page is rendered", () => {
         let view: ShallowWrapper
 
-        beforeAll(() => (view = shallow(<ChartPage chart={chart} />)))
+        beforeAll(
+            () =>
+                (view = shallow(
+                    <ChartPage
+                        chart={chart}
+                        clientSettings={new ClientSettings()}
+                    />
+                ))
+        )
 
         it("preloads the data", () => {
             const path = "/grapher/data/variables/104402.json?v=7"

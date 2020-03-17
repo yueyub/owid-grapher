@@ -10,7 +10,12 @@ import { HighlightToggleConfig } from "./ChartConfig"
 import { Timeline } from "./HTMLTimeline"
 import { extend, keys, entries } from "./Util"
 import { worldRegions, labelsByRegion } from "./WorldRegions"
-import { ADMIN_BASE_URL, ENV } from "settings"
+
+import { ClientSettings } from "clientSettings"
+
+// todo: cleanup
+const clientSettings = new ClientSettings()
+const { ADMIN_BASE_URL, ENV } = clientSettings
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCode } from "@fortawesome/free-solid-svg-icons/faCode"

@@ -1,8 +1,7 @@
 import * as ReactDOMServer from "react-dom/server"
-import * as _ from "lodash"
+import * as lodash from "lodash"
 import { quote } from "shell-quote"
 import urljoin = require("url-join")
-import * as settings from "settings"
 import * as shell from "shelljs"
 
 export const promisifiedExec: (
@@ -60,7 +59,7 @@ export function renderToHtmlPage(element: any): string {
 
 // Determine if input is suitable for use as a url slug
 export function isValidSlug(slug: any) {
-    return _.isString(slug) && slug.length > 1 && slug.match(/^[\w-]+$/)
+    return lodash.isString(slug) && slug.length > 1 && slug.match(/^[\w-]+$/)
 }
 
 export function shellEscape(s: string) {
@@ -68,17 +67,13 @@ export function shellEscape(s: string) {
 }
 
 export function csvEscape(value: any): string {
-    const valueStr = _.toString(value)
-    if (_.includes(valueStr, ",")) return `"${value.replace(/\"/g, '""')}"`
+    const valueStr = lodash.toString(value)
+    if (lodash.includes(valueStr, ",")) return `"${value.replace(/\"/g, '""')}"`
     else return value
 }
 
 export function csvRow(arr: string[]): string {
     return arr.map(x => csvEscape(x)).join(",") + "\n"
-}
-
-export function absoluteUrl(path: string): string {
-    return urljoin(settings.ADMIN_BASE_URL, path)
 }
 
 // Take an arbitrary string and turn it into a nice url slug
@@ -87,7 +82,7 @@ export function slugify(s: string) {
         .toLowerCase()
         .replace(/\s*\*.+\*/, "")
         .replace(/[^\w- ]+/g, "")
-    return _.trim(s).replace(/ +/g, "-")
+    return lodash.trim(s).replace(/ +/g, "-")
 }
 
 export const splitOnLastWord = (s: string) => {

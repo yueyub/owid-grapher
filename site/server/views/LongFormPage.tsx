@@ -1,4 +1,3 @@
-import { BAKED_BASE_URL, WORDPRESS_URL } from "settings"
 import * as React from "react"
 import { Head } from "./Head"
 import { CitationMeta } from "./CitationMeta"
@@ -15,16 +14,18 @@ import { SiteSubnavigation } from "./SiteSubnavigation"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faBook } from "@fortawesome/free-solid-svg-icons/faBook"
 import { TableOfContents } from "site/client/TableOfContents"
+import { ClientSettings } from "clientSettings"
 
 export const LongFormPage = (props: {
     entries: CategoryWithEntries[]
     post: FormattedPost
     formattingOptions: FormattingOptions
+    clientSettings: ClientSettings
 }) => {
-    const { entries, post, formattingOptions } = props
+    const { entries, post, formattingOptions, clientSettings } = props
 
     const pageTitle = post.title
-    const canonicalUrl = `${BAKED_BASE_URL}/${post.slug}`
+    const canonicalUrl = `${clientSettings.BAKED_BASE_URL}/${post.slug}`
     const pageDesc = post.excerpt
     const publishedYear = post.modifiedDate.getFullYear()
     const isEntry = entries.some(category => {
@@ -74,6 +75,7 @@ export const LongFormPage = (props: {
     return (
         <html>
             <Head
+                clientSettings={clientSettings}
                 pageTitle={pageTitle}
                 pageDesc={pageDesc}
                 canonicalUrl={canonicalUrl}
@@ -242,7 +244,7 @@ export const LongFormPage = (props: {
                                 <a
                                     className="ab-item"
                                     aria-haspopup="true"
-                                    href={`${WORDPRESS_URL}/wp/wp-admin`}
+                                    href={`${clientSettings.WORDPRESS_URL}/wp/wp-admin`}
                                 >
                                     Wordpress
                                 </a>
@@ -250,7 +252,9 @@ export const LongFormPage = (props: {
                             <li id="wp-admin-bar-edit">
                                 <a
                                     className="ab-item"
-                                    href={`${WORDPRESS_URL}/wp/wp-admin/post.php?post=${post.postId ||
+                                    href={`${
+                                        clientSettings.WORDPRESS_URL
+                                    }/wp/wp-admin/post.php?post=${post.postId ||
                                         post.id}&action=edit`}
                                 >
                                     Edit Page
@@ -259,7 +263,10 @@ export const LongFormPage = (props: {
                         </ul>
                     </div>
                 </div>
-                <SiteFooter hideDonate={formattingOptions.hideDonateFooter} />
+                <SiteFooter
+                    hideDonate={formattingOptions.hideDonateFooter}
+                    clientSettings={clientSettings}
+                />
                 <script
                     dangerouslySetInnerHTML={{
                         __html: `

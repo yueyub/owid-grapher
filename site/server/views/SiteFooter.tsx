@@ -1,12 +1,13 @@
 import * as React from "react"
-import { webpack } from "utils/server/staticGen"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faAngleRight } from "@fortawesome/free-solid-svg-icons/faAngleRight"
-import { BAKED_BASE_URL } from "settings"
+import { ClientSettings } from "clientSettings"
 
 export const SiteFooter = ({
+    clientSettings,
     hideDonate = false
 }: {
+    clientSettings: ClientSettings
     hideDonate?: boolean
 }) => {
     return (
@@ -189,7 +190,7 @@ export const SiteFooter = ({
                                     data-track-note="footer-navigation"
                                 >
                                     <img
-                                        src={`${BAKED_BASE_URL}/oms-logo.svg`}
+                                        src={`${clientSettings.BAKED_BASE_URL}/oms-logo.svg`}
                                         alt="Oxford Martin School logo"
                                     />
                                 </a>
@@ -200,7 +201,7 @@ export const SiteFooter = ({
                                     data-track-note="footer-navigation"
                                 >
                                     <img
-                                        src={`${BAKED_BASE_URL}/yc-logo.png`}
+                                        src={`${clientSettings.BAKED_BASE_URL}/yc-logo.png`}
                                         alt="Y Combinator logo"
                                     />
                                 </a>
@@ -232,7 +233,7 @@ export const SiteFooter = ({
                                         data-track-note="footer-navigation"
                                     >
                                         <img
-                                            src={`${BAKED_BASE_URL}/gcdl-logo-narrow.png`}
+                                            src={`${clientSettings.BAKED_BASE_URL}/gcdl-logo-narrow.png`}
                                             alt="Global Change Data Lab logo"
                                         />
                                     </a>
@@ -250,8 +251,8 @@ export const SiteFooter = ({
                 </div>
                 <div className="site-tools" />
                 <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=es6,fetch" />
-                <script src={webpack("commons.js", "site")} />
-                <script src={webpack("owid.js", "site")} />
+                <script src={clientSettings.getWebPackUrl("commons.js")} />
+                <script src={clientSettings.getWebPackUrl("owid.js")} />
                 <script
                     dangerouslySetInnerHTML={{
                         __html: `

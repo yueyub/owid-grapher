@@ -1,8 +1,11 @@
-import * as _ from "lodash"
+import * as lodash from "lodash"
 
 import { ChartConfigProps } from "charts/ChartConfig"
 import { ChartTypeType } from "charts/ChartType"
-import { EXPLORER } from "settings"
+
+import { ClientSettings } from "clientSettings"
+// todo: cleanup
+const EXPLORER = new ClientSettings().EXPLORER
 
 export const EXPLORABLE_CHART_TYPES: ChartTypeType[] = [
     "LineChart",
@@ -101,7 +104,7 @@ export function canBeExplorable(config: ChartConfigProps) {
 export function isExplorable(config: ChartConfigProps): boolean {
     return (
         (config.isExplorable ||
-            _.includes(FORCE_EXPLORABLE_CHART_IDS, config.id)) &&
+            lodash.includes(FORCE_EXPLORABLE_CHART_IDS, config.id)) &&
         canBeExplorable(config)
     )
 }

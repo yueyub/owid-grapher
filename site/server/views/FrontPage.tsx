@@ -1,4 +1,4 @@
-import * as settings from "settings"
+import { ClientSettings } from "clientSettings"
 import * as React from "react"
 import { Head } from "./Head"
 import { SiteHeader } from "./SiteHeader"
@@ -18,19 +18,20 @@ import { CovidBanner } from "./CovidBanner"
 
 export const FrontPage = (props: {
     entries: CategoryWithEntries[]
+    clientSettings: ClientSettings
     posts: FullPost[]
     totalCharts: number
 }) => {
-    const { entries, posts, totalCharts } = props
+    const { entries, posts, totalCharts, clientSettings } = props
 
     // Structured data for google
     const structuredMarkup = {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        url: settings.BAKED_BASE_URL,
+        url: clientSettings.BAKED_BASE_URL,
         potentialAction: {
             "@type": "SearchAction",
-            target: `${settings.BAKED_BASE_URL}/search?q={search_term_string}`,
+            target: `${clientSettings.BAKED_BASE_URL}/search?q={search_term_string}`,
             "query-input": "required name=search_term_string"
         }
     }
@@ -75,7 +76,7 @@ export const FrontPage = (props: {
 
     return (
         <html>
-            <Head canonicalUrl={settings.BAKED_BASE_URL}>
+            <Head canonicalUrl={clientSettings.BAKED_BASE_URL}>
                 <script
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{
@@ -126,7 +127,7 @@ export const FrontPage = (props: {
                                             data-track-note="homepage-trust"
                                         >
                                             <img
-                                                src={`${settings.BAKED_BASE_URL}/media-logos-wide.png`}
+                                                src={`${clientSettings.BAKED_BASE_URL}/media-logos-wide.png`}
                                                 alt="Logos of the publications that have used our content"
                                             />
                                             <div className="hover-note">
@@ -149,7 +150,7 @@ export const FrontPage = (props: {
                                             data-track-note="homepage-trust"
                                         >
                                             <img
-                                                src={`${settings.BAKED_BASE_URL}/university-logos-wide.png`}
+                                                src={`${clientSettings.BAKED_BASE_URL}/university-logos-wide.png`}
                                                 alt="Logos of the universities that have used our content"
                                             />
                                             <div className="hover-note">
@@ -459,7 +460,7 @@ export const FrontPage = (props: {
                             >
                                 <div className="icon-left">
                                     <img
-                                        src={`${settings.BAKED_BASE_URL}/sdg-wheel.png`}
+                                        src={`${clientSettings.BAKED_BASE_URL}/sdg-wheel.png`}
                                         alt="SDG Tracker logo"
                                     />
                                 </div>
@@ -484,7 +485,7 @@ export const FrontPage = (props: {
                             >
                                 <div className="icon-left">
                                     <img
-                                        src={`${settings.BAKED_BASE_URL}/teaching-hub.svg`}
+                                        src={`${clientSettings.BAKED_BASE_URL}/teaching-hub.svg`}
                                         alt="Teaching Hub logo"
                                     />
                                 </div>
@@ -550,7 +551,7 @@ export const FrontPage = (props: {
                     </div>
                 </section>
 
-                <SiteFooter />
+                <SiteFooter clientSettings={clientSettings} />
             </body>
         </html>
     )

@@ -3,9 +3,9 @@ const urlSlug = require("url-slug")
 import * as _ from "lodash"
 import * as React from "react"
 import * as ReactDOMServer from "react-dom/server"
-import { HTTPS_ONLY } from "serverSettings"
-import { BAKED_BASE_URL, WORDPRESS_URL } from "settings"
-import { getTables, FullPost } from "db/wpdb"
+import { ServerSettings } from "serverSettings"
+import { ClientSettings } from "clientSettings"
+import { dbInstance, FullPost } from "db/wpdb"
 import Tablepress from "./views/Tablepress"
 import { GrapherExports } from "./grapherUtil"
 import * as path from "path"
@@ -92,10 +92,11 @@ async function formatLatex(
     })
 }
 
-export async function formatWordpressPost(
+async function formatWordpressPost(
     post: FullPost,
     html: string,
     formattingOptions: FormattingOptions,
+    serverSettings: ServerSettings,
     grapherExports?: GrapherExports
 ): Promise<FormattedPost> {
     // Strip comments
@@ -126,7 +127,7 @@ export async function formatWordpressPost(
     })
 
     // Insert [table id=foo] tablepress tables
-    const tables = await getTables()
+    const tables = await dbInstance.getTables()
     html = html.replace(/\[table\s+id=(\d+)\s*\/\]/g, (match, tableId) => {
         const table = tables.get(tableId)
         if (table)
@@ -535,14 +536,22 @@ function parseFormattingOptions(text: string): FormattingOptions {
 export async function formatPost(
     post: FullPost,
     formattingOptions: FormattingOptions,
+    clientSettings: ClientSettings,
+    serverSettings: ServerSettings,
     grapherExports?: GrapherExports
 ): Promise<FormattedPost> {
     let html = post.content
 
     // Standardize urls
     html = html
-        .replace(new RegExp(WORDPRESS_URL, "g"), BAKED_BASE_URL)
-        .replace(new RegExp("https?://ourworldindata.org", "g"), BAKED_BASE_URL)
+        .replace(
+            new RegExp(clientSettings.WORDPRESS_URL, "g"),
+            clientSettings.BAKED_BASE_URL
+        )
+        .replace(
+            new RegExp("https?://ourworldindata.org", "g"),
+            clientSettings.BAKED_BASE_URL
+        )
 
     // No formatting applied, plain source HTML returned
     if (formattingOptions.raw) {
@@ -573,7 +582,13 @@ export async function formatPost(
             },
             formattingOptions
         )
-        return formatWordpressPost(post, html, options, grapherExports)
+        return formatWordpressPost(
+            post,
+            html,
+            options,
+            serverSettings,
+            grapherExports
+        )
     }
 }
 

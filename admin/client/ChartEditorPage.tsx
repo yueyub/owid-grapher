@@ -38,6 +38,7 @@ import { AdminAppContext, AdminAppContextType } from "./AdminAppContext"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faMobile } from "@fortawesome/free-solid-svg-icons/faMobile"
 import { faDesktop } from "@fortawesome/free-solid-svg-icons/faDesktop"
+import { ClientSettings } from "clientSettings"
 
 @observer
 class TabBinder extends React.Component<{ editor: ChartEditor }> {
@@ -76,6 +77,7 @@ class TabBinder extends React.Component<{ editor: ChartEditor }> {
 
 @observer
 export class ChartEditorPage extends React.Component<{
+    clientSettings: ClientSettings
     chartId?: number
     newChartIndex?: number
     chartConfig?: any
@@ -273,7 +275,10 @@ export class ChartEditorPage extends React.Component<{
                             <EditorReferencesTab editor={editor} />
                         )}
                     </div>
-                    <SaveButtons editor={editor} />
+                    <SaveButtons
+                        editor={editor}
+                        clientSettings={this.props.clientSettings}
+                    />
                 </div>
                 <div className="chart-editor-view">
                     <figure data-grapher-src>

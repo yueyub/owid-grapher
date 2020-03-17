@@ -3,13 +3,17 @@ import { observer } from "mobx-react"
 import { observable, computed, action, runInAction } from "mobx"
 const timeago = require("timeago.js")()
 const fuzzysort = require("fuzzysort")
-import * as _ from "lodash"
+import * as lodash from "lodash"
 
 import { AdminLayout } from "./AdminLayout"
 import { SearchField, FieldsRow } from "./Forms"
 import { AdminAppContext, AdminAppContextType } from "./AdminAppContext"
-import { WORDPRESS_URL } from "settings"
 import { Tag } from "./TagBadge"
+
+import { ClientSettings } from "clientSettings"
+// todo: cleanup
+const clientSettings = new ClientSettings()
+const WORDPRESS_URL = clientSettings.WORDPRESS_URL
 
 interface PostIndexMeta {
     id: number
@@ -100,7 +104,7 @@ export class NewsletterPage extends React.Component {
                 limit: 50,
                 key: "term"
             })
-            return _.uniq(results.map((result: any) => result.obj.post))
+            return lodash.uniq(results.map((result: any) => result.obj.post))
         } else {
             return this.posts.slice(0, maxVisibleRows)
         }

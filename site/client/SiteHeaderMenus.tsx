@@ -14,8 +14,7 @@ import classnames from "classnames"
 import { find } from "lodash"
 import { bind } from "decko"
 
-import { BAKED_BASE_URL } from "settings"
-
+import { ClientSettings } from "clientSettings"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faSearch } from "@fortawesome/free-solid-svg-icons/faSearch"
 import { faBars } from "@fortawesome/free-solid-svg-icons/faBars"
@@ -30,6 +29,7 @@ import { NewsletterSubscriptionForm } from "./NewsletterSubscription"
 @observer
 export class Header extends React.Component<{
     categories: CategoryWithEntries[]
+    clientSettings: ClientSettings
 }> {
     @observable.ref dropdownIsOpen: boolean = false
 
@@ -122,7 +122,7 @@ export class Header extends React.Component<{
     }
 
     render() {
-        const { categories } = this.props
+        const { categories, clientSettings } = this.props
 
         return (
             <React.Fragment>
@@ -239,7 +239,7 @@ export class Header extends React.Component<{
                             className="oxford-logo"
                         >
                             <img
-                                src={`${BAKED_BASE_URL}/oms-logo.svg`}
+                                src={`${clientSettings.BAKED_BASE_URL}/oms-logo.svg`}
                                 alt="Oxford Martin School logo"
                             />
                         </a>
@@ -248,7 +248,7 @@ export class Header extends React.Component<{
                             className="gcdl-logo"
                         >
                             <img
-                                src={`${BAKED_BASE_URL}/gcdl-logo-narrow.png`}
+                                src={`${clientSettings.BAKED_BASE_URL}/gcdl-logo-narrow.png`}
                                 alt="Global Change Data Lab logo"
                             />
                         </a>
@@ -568,7 +568,9 @@ export class MobileTopicsMenu extends React.Component<{
 }
 
 @observer
-export class SiteHeaderMenus extends React.Component {
+export class SiteHeaderMenus extends React.Component<{
+    clientSettings: ClientSettings
+}> {
     @observable width!: number
     @observable.ref categories: CategoryWithEntries[] = []
 
@@ -601,10 +603,20 @@ export class SiteHeaderMenus extends React.Component {
     }
 
     render() {
-        return <Header categories={this.categories} />
+        return (
+            <Header
+                categories={this.categories}
+                clientSettings={this.props.clientSettings}
+            />
+        )
     }
 }
 
 export function runHeaderMenus() {
-    ReactDOM.render(<SiteHeaderMenus />, document.querySelector(".site-header"))
+    // todo: cleanup
+    const clientSettings = new ClientSettings()
+    ReactDOM.render(
+        <SiteHeaderMenus clientSettings={clientSettings} />,
+        document.querySelector(".site-header")
+    )
 }

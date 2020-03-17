@@ -5,7 +5,14 @@ import { observable, action, computed, runInAction } from "mobx"
 import { observer } from "mobx-react"
 import { bind } from "decko"
 import * as Recaptcha from "react-recaptcha"
-import { DONATE_API_URL, BAKED_BASE_URL, RECAPTCHA_SITE_KEY } from "settings"
+import { ClientSettings } from "clientSettings"
+
+// todo: cleanup
+const {
+    DONATE_API_URL,
+    BAKED_BASE_URL,
+    RECAPTCHA_SITE_KEY
+} = new ClientSettings()
 
 import stripe from "./stripe"
 

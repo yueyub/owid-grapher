@@ -10,8 +10,7 @@ import { extend } from "charts/Util"
 import { ChartConfig } from "charts/ChartConfig"
 import { EditorFeatures } from "./EditorFeatures"
 import { Admin } from "./Admin"
-import { BAKED_GRAPHER_URL } from "settings"
-import _ = require("lodash")
+import lodash = require("lodash")
 
 export type EditorTab = string
 
@@ -216,8 +215,8 @@ export class ChartEditor {
             )
     }
 
-    publishChart() {
-        const url = `${BAKED_GRAPHER_URL}/${this.chart.data.slug}`
+    publishChart(grapherUrl: string) {
+        const url = `${grapherUrl}/${this.chart.data.slug}`
 
         if (window.confirm(`Publish chart at ${url}?`)) {
             this.chart.props.isPublished = true

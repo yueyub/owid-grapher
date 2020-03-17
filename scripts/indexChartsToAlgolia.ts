@@ -1,13 +1,16 @@
 import * as algoliasearch from "algoliasearch"
-import * as _ from "lodash"
+import * as lodash from "lodash"
 
 import * as db from "db/db"
-import { ALGOLIA_ID } from "settings"
-import { ALGOLIA_SECRET_KEY } from "serverSettings"
+import { ClientSettings } from "clientSettings"
+import { ServerSettings } from "serverSettings"
 import { configureAlgolia } from "./configureAlgolia"
 
-async function indexChartsToAlgolia() {
-    await configureAlgolia()
+async function indexChartsToAlgolia(
+    clientSettings = new ClientSettings(),
+    serverSettings = new ServerSettings()
+) {
+    await configureAlgolia(clientSettings, serverSettings)
 
     const allCharts = await db.query(`
         SELECT id, publishedAt, updatedAt, JSON_LENGTH(config->"$.dimensions") AS numDimensions, config->>"$.type" AS type, config->>"$.slug" AS slug, config->>"$.title" AS title, config->>"$.subtitle" AS subtitle, config->>"$.variantName" AS variantName, config->>"$.data.availableEntities" as availableEntitiesStr
@@ -26,7 +29,7 @@ async function indexChartsToAlgolia() {
         c.tags = []
     }
 
-    const chartsById = _.keyBy(allCharts, c => c.id)
+    const chartsById = lodash.keyBy(allCharts, c => c.id)
 
     const chartsToIndex = []
     for (const ct of chartTags) {
@@ -37,7 +40,10 @@ async function indexChartsToAlgolia() {
         }
     }
 
-    const client = algoliasearch(ALGOLIA_ID, ALGOLIA_SECRET_KEY)
+    const client = algoliasearch(
+        clientSettings.ALGOLIA_ID,
+        serverSettings.ALGOLIA_SECRET_KEY
+    )
     const finalIndex = await client.initIndex("charts")
     const tmpIndex = await client.initIndex("charts_tmp")
 

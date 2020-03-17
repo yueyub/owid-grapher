@@ -2,9 +2,13 @@ import * as React from "react"
 import { ChartEditor } from "./ChartEditor"
 import { action } from "mobx"
 import { observer } from "mobx-react"
+import { ClientSettings } from "clientSettings"
 
 @observer
-export class SaveButtons extends React.Component<{ editor: ChartEditor }> {
+export class SaveButtons extends React.Component<{
+    editor: ChartEditor
+    clientSettings: ClientSettings
+}> {
     @action.bound onSaveChart() {
         this.props.editor.saveChart()
     }
@@ -16,7 +20,10 @@ export class SaveButtons extends React.Component<{ editor: ChartEditor }> {
     @action.bound onPublishToggle() {
         if (this.props.editor.chart.isPublished)
             this.props.editor.unpublishChart()
-        else this.props.editor.publishChart()
+        else
+            this.props.editor.publishChart(
+                this.props.clientSettings.BAKED_GRAPHER_URL
+            )
     }
 
     render() {

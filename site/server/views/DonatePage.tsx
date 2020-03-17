@@ -1,20 +1,22 @@
 import * as React from "react"
 
-import * as settings from "settings"
+import { ClientSettings } from "clientSettings"
 import { Head } from "./Head"
 import { SiteHeader } from "./SiteHeader"
 import { SiteFooter } from "./SiteFooter"
 
-export const DonatePage = () => {
+export const DonatePage = (props: { clientSettings: ClientSettings }) => {
+    const { clientSettings } = props
     return (
         <html>
             <Head
-                canonicalUrl={`${settings.BAKED_BASE_URL}/donate`}
+                clientSettings={clientSettings}
+                canonicalUrl={`${clientSettings.BAKED_BASE_URL}/donate`}
                 pageTitle="Donate"
             >
                 <script src="https://js.stripe.com/v3/" />
                 <script
-                    src={`https://www.google.com/recaptcha/api.js?render=${settings.RECAPTCHA_SITE_KEY}`}
+                    src={`https://www.google.com/recaptcha/api.js?render=${clientSettings.RECAPTCHA_SITE_KEY}`}
                 />
             </Head>
             <body>
@@ -88,7 +90,7 @@ export const DonatePage = () => {
                     </article>
                 </main>
 
-                <SiteFooter hideDonate={true} />
+                <SiteFooter hideDonate={true} clientSettings={clientSettings} />
 
                 <script
                     dangerouslySetInnerHTML={{

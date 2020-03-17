@@ -1,16 +1,17 @@
-import * as settings from "settings"
 import * as React from "react"
 import { Head } from "./Head"
 import { SiteHeader } from "./SiteHeader"
 import { SiteFooter } from "./SiteFooter"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faSearch } from "@fortawesome/free-solid-svg-icons/faSearch"
+import { ClientSettings } from "clientSettings"
 
-export const NotFoundPage = () => {
+export const NotFoundPage = (props: { clientSettings: ClientSettings }) => {
     return (
         <html>
             <Head
-                canonicalUrl={`${settings.BAKED_BASE_URL}/search`}
+                clientSettings={props.clientSettings}
+                canonicalUrl={`${props.clientSettings.BAKED_BASE_URL}/search`}
                 pageTitle="404 Not Found"
                 pageDesc="Search articles and charts on Our World in Data."
             />
@@ -37,7 +38,10 @@ export const NotFoundPage = () => {
                         </button>
                     </form>
                 </main>
-                <SiteFooter hideDonate={true} />
+                <SiteFooter
+                    hideDonate={true}
+                    clientSettings={props.clientSettings}
+                />
                 <script
                     dangerouslySetInnerHTML={{
                         __html: `

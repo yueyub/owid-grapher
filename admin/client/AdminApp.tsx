@@ -30,6 +30,7 @@ import {
 import { LoadingBlocker, Modal } from "./Forms"
 import { AdminAppContext } from "./AdminAppContext"
 import { Base64 } from "js-base64"
+import { ClientSettings } from "clientSettings"
 
 @observer
 class AdminErrorMessage extends React.Component<{ admin: Admin }> {
@@ -82,13 +83,16 @@ class AdminLoader extends React.Component<{ admin: Admin }> {
 }
 
 @observer
-export class AdminApp extends React.Component<{ admin: Admin }> {
+export class AdminApp extends React.Component<{
+    admin: Admin
+    clientSettings: ClientSettings
+}> {
     get childContext() {
         return { admin: this.props.admin }
     }
 
     render() {
-        const { admin } = this.props
+        const { admin, clientSettings } = this.props
 
         return (
             <AdminAppContext.Provider value={this.childContext}>
@@ -105,13 +109,14 @@ export class AdminApp extends React.Component<{ admin: Admin }> {
                                         chartConfig={JSON.parse(
                                             Base64.decode(match.params.config)
                                         )}
+                                        clientSettings={clientSettings}
                                     />
                                 )}
                             />
                             <Route
                                 exact
                                 path="/charts/create"
-                                component={ChartEditorPage}
+                                component={ChartEditorPage} // todo: may need to fix.
                             />
                             <Route
                                 exact
@@ -119,6 +124,7 @@ export class AdminApp extends React.Component<{ admin: Admin }> {
                                 render={({ match }) => (
                                     <ChartEditorPage
                                         chartId={parseInt(match.params.chartId)}
+                                        clientSettings={clientSettings}
                                     />
                                 )}
                             />

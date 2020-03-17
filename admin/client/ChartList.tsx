@@ -9,7 +9,9 @@ import { Tag } from "./TagBadge"
 import { bind } from "decko"
 import { EditableTags } from "./Forms"
 import { AdminAppContext, AdminAppContextType } from "./AdminAppContext"
-import { BAKED_GRAPHER_URL } from "settings"
+
+import { ClientSettings } from "clientSettings"
+
 import { ChartTypeDefsByKey } from "charts/ChartType"
 
 export interface ChartListItem {
@@ -51,6 +53,7 @@ class ChartRow extends React.Component<{
     availableTags: Tag[]
     onDelete: (chart: ChartListItem) => void
     onStar: (chart: ChartListItem) => void
+    clientSettings: ClientSettings
 }> {
     static contextType = AdminAppContext
     context!: AdminAppContextType
@@ -72,7 +75,12 @@ class ChartRow extends React.Component<{
     }
 
     render() {
-        const { chart, searchHighlight, availableTags } = this.props
+        const {
+            chart,
+            searchHighlight,
+            availableTags,
+            clientSettings
+        } = this.props
 
         const highlight = searchHighlight || _.identity
 
@@ -80,9 +88,11 @@ class ChartRow extends React.Component<{
             <tr>
                 <td>
                     {chart.isPublished && (
-                        <a href={`${BAKED_GRAPHER_URL}/${chart.slug}`}>
+                        <a
+                            href={`${clientSettings.BAKED_GRAPHER_URL}/${chart.slug}`}
+                        >
                             <img
-                                src={`${BAKED_GRAPHER_URL}/exports/${chart.slug}.svg`}
+                                src={`${clientSettings.BAKED_GRAPHER_URL}/exports/${chart.slug}.svg`}
                                 className="chartPreview"
                             />
                         </a>
@@ -90,7 +100,9 @@ class ChartRow extends React.Component<{
                 </td>
                 {chart.isPublished ? (
                     <td>
-                        <a href={`${BAKED_GRAPHER_URL}/${chart.slug}`}>
+                        <a
+                            href={`${clientSettings.BAKED_GRAPHER_URL}/${chart.slug}`}
+                        >
                             {highlight(chart.title)}
                         </a>{" "}
                         {chart.variantName ? (
@@ -159,6 +171,7 @@ export class ChartList extends React.Component<{
     charts: ChartListItem[]
     searchHighlight?: (text: string) => any
     onDelete?: (chart: ChartListItem) => void
+    clientSettings: ClientSettings
 }> {
     static contextType = AdminAppContext
     context!: AdminAppContextType
@@ -222,7 +235,7 @@ export class ChartList extends React.Component<{
     }
 
     render() {
-        const { charts, searchHighlight } = this.props
+        const { charts, searchHighlight, clientSettings } = this.props
         const { availableTags } = this
         return (
             <table className="table table-bordered">
@@ -246,6 +259,7 @@ export class ChartList extends React.Component<{
                             key={chart.id}
                             availableTags={availableTags}
                             searchHighlight={searchHighlight}
+                            clientSettings={clientSettings}
                             onDelete={this.onDeleteChart}
                             onStar={this.onStar}
                         />

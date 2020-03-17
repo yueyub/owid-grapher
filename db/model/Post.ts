@@ -72,7 +72,7 @@ export namespace Post {
 }
 
 export async function syncPostsToGrapher() {
-    const rows = await wpdb.query(
+    const rows = await wpdb.dbInstance.query(
         "SELECT * FROM wp_posts WHERE (post_type='page' OR post_type='post') AND post_status != 'trash'"
     )
 
@@ -124,8 +124,8 @@ export async function syncPostsToGrapher() {
 }
 
 export async function syncPostTagsToGrapher() {
-    const tagsByPostId = await wpdb.getTagsByPostId()
-    const postRows = await wpdb.query(
+    const tagsByPostId = await wpdb.dbInstance.getTagsByPostId()
+    const postRows = await wpdb.dbInstance.query(
         "select * from wp_posts where (post_type='page' or post_type='post') AND post_status != 'trash'"
     )
 
@@ -155,7 +155,7 @@ export async function syncPostTagsToGrapher() {
 export async function syncPostToGrapher(
     postId: number
 ): Promise<string | undefined> {
-    const rows = await wpdb.query(
+    const rows = await wpdb.dbInstance.query(
         "SELECT * FROM wp_posts WHERE ID = ? AND post_status != 'trash'",
         [postId]
     )

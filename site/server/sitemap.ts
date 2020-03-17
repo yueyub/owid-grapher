@@ -1,6 +1,6 @@
 import { Post } from "db/model/Post"
 import { Chart } from "db/model/Chart"
-import { BAKED_BASE_URL, BAKED_GRAPHER_URL } from "settings"
+import { BAKED_BASE_URL, BAKED_GRAPHER_URL } from "clientSettings"
 import moment = require("moment")
 import db = require("db/db")
 import { countries } from "utils/countries"

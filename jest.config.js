@@ -13,7 +13,7 @@ const common = {
     preset: "ts-jest",
     moduleNameMapper: {
         "^(admin|site|charts|utils|db|settings|test)/(.*)$": "<rootDir>/$1/$2",
-        "^settings$": "<rootDir>/settings",
+        "^clientSettings$": "<rootDir>/clientSettings",
         "^serverSettings$": "<rootDir>/serverSettings",
         // Jest cannot handle importing CSS
         // https://stackoverflow.com/questions/39418555/syntaxerror-with-jest-and-react-and-importing-css-files

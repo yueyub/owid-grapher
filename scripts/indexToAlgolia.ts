@@ -2,12 +2,19 @@ import * as algoliasearch from "algoliasearch"
 
 import * as db from "db/db"
 import * as wpdb from "db/wpdb"
-import { ALGOLIA_ID } from "settings"
-import { ALGOLIA_SECRET_KEY } from "serverSettings"
+
 import { formatPost, FormattedPost } from "site/server/formatting"
 import { chunkParagraphs } from "utils/search"
 import { htmlToPlaintext } from "utils/string"
 import { countries } from "utils/countries"
+
+import { ServerSettings } from "serverSettings"
+const serverSettings = new ServerSettings()
+const { ALGOLIA_SECRET_KEY } = serverSettings
+
+import { ClientSettings } from "clientSettings"
+const clientSettings = new ClientSettings()
+const { ALGOLIA_ID } = clientSettings
 
 interface Tag {
     id: number
@@ -41,8 +48,8 @@ function getPostType(post: FormattedPost, tags: Tag[]) {
 
 async function indexToAlgolia() {
     const client = algoliasearch(ALGOLIA_ID, ALGOLIA_SECRET_KEY)
-    const finalIndex = await client.initIndex("pages")
-    const tmpIndex = await client.initIndex("pages_tmp")
+    const finalIndex = client.initIndex("pages")
+    const tmpIndex = client.initIndex("pages_tmp")
 
     // Copy to a temporary index which we will then update
     // This is so we can do idempotent reindexing
@@ -52,7 +59,7 @@ async function indexToAlgolia() {
         "rules"
     ])
 
-    const postsApi = await wpdb.getPosts()
+    const postsApi = await wpdb.dbInstance.getPosts(clientSettings)
 
     const records = []
 
@@ -67,17 +74,25 @@ async function indexToAlgolia() {
     }
 
     for (const postApi of postsApi) {
-        const rawPost = await wpdb.getFullPost(postApi)
+        const rawPost = wpdb.dbInstance.getFullPost(
+            postApi,
+            clientSettings.BAKED_BASE_URL
+        )
 
         // Index the content of blog posts as entry sections (BPES) within the context
         // of the embedding entry, and not the blog post. In other words,
         // searching for BPES content will show up in the SERP under an entry
         // block.
-        if (wpdb.isPostEmbedded(rawPost)) {
+        if (wpdb.dbInstance.isPostEmbedded(rawPost)) {
             continue
         }
 
-        const post = await formatPost(rawPost, { footnotes: false })
+        const post = await formatPost(
+            rawPost,
+            { footnotes: false },
+            clientSettings,
+            serverSettings
+        )
         const postText = htmlToPlaintext(post.html)
         const chunks = chunkParagraphs(postText, 1000)
 
@@ -114,7 +129,7 @@ async function indexToAlgolia() {
     }
     await client.moveIndex(tmpIndex.indexName, finalIndex.indexName)
 
-    await wpdb.end()
+    await wpdb.dbInstance.end()
     await db.end()
 }
 

@@ -1,4 +1,5 @@
-import * as settings from "settings"
+import { ClientSettings } from "clientSettings"
+
 import * as React from "react"
 import { Head } from "./Head"
 import { SiteHeader } from "./SiteHeader"
@@ -28,11 +29,12 @@ export interface CountryProfilePageProps {
         slug: string
         code: string
     }
+    clientSettings: ClientSettings
     indicators: CountryProfileIndicator[]
 }
 
 export const CountryProfilePage = (props: CountryProfilePageProps) => {
-    const { country, indicators } = props
+    const { country, indicators, clientSettings } = props
 
     // const displayName = defaultTo(variable.display.name, variable.name)
 
@@ -41,7 +43,8 @@ export const CountryProfilePage = (props: CountryProfilePageProps) => {
     return (
         <html>
             <Head
-                canonicalUrl={`${settings.BAKED_BASE_URL}/country/${country.slug}`}
+                clientSettings={clientSettings}
+                canonicalUrl={`${clientSettings.BAKED_BASE_URL}/country/${country.slug}`}
                 pageTitle={`${country.name}`}
                 pageDesc={`Population, GDP, life expectancy, birth rate and other key metrics for ${country.name}.`}
             />
@@ -74,7 +77,7 @@ export const CountryProfilePage = (props: CountryProfilePageProps) => {
                                     <div className="indicatorName">
                                         <a
                                             href={urljoin(
-                                                settings.BAKED_BASE_URL,
+                                                clientSettings.BAKED_BASE_URL,
                                                 indicator.slug
                                             )}
                                         >
@@ -94,7 +97,7 @@ export const CountryProfilePage = (props: CountryProfilePageProps) => {
                         </ul>
                     </section>
                 </main>
-                <SiteFooter />
+                <SiteFooter clientSettings={clientSettings} />
                 <script dangerouslySetInnerHTML={{ __html: script }} />
             </body>
         </html>

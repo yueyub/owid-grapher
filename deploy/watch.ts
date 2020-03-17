@@ -1,5 +1,9 @@
 import * as fs from "fs-extra"
-import { DEPLOY_QUEUE_FILE_PATH } from "serverSettings"
+
+import { ServerSettings } from "serverSettings"
+const serverSettings = new ServerSettings()
+const { DEPLOY_QUEUE_FILE_PATH } = serverSettings
+
 import { triggerDeploy, queueIsEmpty } from "./queue"
 
 async function main() {
@@ -10,8 +14,8 @@ async function main() {
         setTimeout(triggerDeploy, 10 * 1000)
     })
 
-    if (!(await queueIsEmpty())) {
-        triggerDeploy()
+    if (!(await queueIsEmpty(serverSettings))) {
+        triggerDeploy(serverSettings)
     }
 }
 

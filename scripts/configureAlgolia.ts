@@ -1,14 +1,20 @@
 import * as algoliasearch from "algoliasearch"
 
-import { ALGOLIA_ID } from "settings"
-import { ALGOLIA_SECRET_KEY } from "serverSettings"
+import { ClientSettings } from "clientSettings"
+import { ServerSettings } from "serverSettings"
 import { countries } from "utils/countries"
 
 // This function initializes and applies settings to the Algolia search indices
 // Algolia settings should be configured here rather than   in the Algolia dashboard UI, as then
 // they are recorded and transferrable across dev/prod instances
-export async function configureAlgolia() {
-    const client = algoliasearch(ALGOLIA_ID, ALGOLIA_SECRET_KEY)
+export async function configureAlgolia(
+    clientSettings = new ClientSettings(),
+    serverSettings = new ServerSettings()
+) {
+    const client = algoliasearch(
+        clientSettings.ALGOLIA_ID,
+        serverSettings.ALGOLIA_SECRET_KEY
+    )
     const chartsIndex = client.initIndex("charts")
 
     await chartsIndex.setSettings({

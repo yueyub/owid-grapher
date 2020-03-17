@@ -1,8 +1,8 @@
-import * as settings from "settings"
 import * as React from "react"
 import { Head } from "./Head"
+import { ClientSettings } from "clientSettings"
 
-export default function SubscribePage() {
+export const SubscribePage = (props: { clientSettings: ClientSettings }) => {
     const style = `
         body {
             display: flex;
@@ -39,7 +39,8 @@ export default function SubscribePage() {
         <html>
             <Head
                 pageTitle="Subscribe"
-                canonicalUrl={`${settings.BAKED_BASE_URL}/subscribe`}
+                clientSettings={props.clientSettings}
+                canonicalUrl={`${props.clientSettings.BAKED_BASE_URL}/subscribe`}
             >
                 <style dangerouslySetInnerHTML={{ __html: style }} />
             </Head>

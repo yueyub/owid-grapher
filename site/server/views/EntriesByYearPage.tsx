@@ -2,18 +2,23 @@ import React = require("react")
 
 import { Post } from "db/model/Post"
 import { Head } from "./Head"
-import { BAKED_BASE_URL } from "settings"
+import { ClientSettings } from "clientSettings"
 import { SiteHeader } from "./SiteHeader"
 import { SiteFooter } from "./SiteFooter"
 import moment = require("moment")
-import _ = require("lodash")
+import lodash = require("lodash")
 
 type Entry = Pick<Post.Row, "title" | "slug" | "published_at">
 
-export const EntriesByYearPage = (props: { entries: Entry[] }) => {
-    const entriesByYear = _.groupBy(props.entries, e =>
+export const EntriesByYearPage = (props: {
+    entries: Entry[]
+    clientSettings: ClientSettings
+}) => {
+    const entriesByYear = lodash.groupBy(props.entries, e =>
         moment(e.published_at as Date).year()
     )
+
+    const { clientSettings } = props
 
     const years = Object.keys(entriesByYear)
         .sort()
@@ -22,7 +27,8 @@ export const EntriesByYearPage = (props: { entries: Entry[] }) => {
     return (
         <html>
             <Head
-                canonicalUrl={`${BAKED_BASE_URL}/entries-by-year`}
+                clientSettings={clientSettings}
+                canonicalUrl={`${clientSettings.BAKED_BASE_URL}/entries-by-year`}
                 pageTitle="Entries by Year"
                 pageDesc="An index of Our World in Data entries by year of first publication."
             />
@@ -37,7 +43,7 @@ export const EntriesByYearPage = (props: { entries: Entry[] }) => {
                         <section>
                             <h2>
                                 <a
-                                    href={`${BAKED_BASE_URL}/entries-by-year/${year}`}
+                                    href={`${clientSettings.BAKED_BASE_URL}/entries-by-year/${year}`}
                                 >
                                     {year}
                                 </a>
@@ -46,7 +52,7 @@ export const EntriesByYearPage = (props: { entries: Entry[] }) => {
                                 {entriesByYear[year].map(entry => (
                                     <li key={entry.slug}>
                                         <a
-                                            href={`${BAKED_BASE_URL}/${entry.slug}`}
+                                            href={`${clientSettings.BAKED_BASE_URL}/${entry.slug}`}
                                         >
                                             {entry.title}
                                         </a>
@@ -56,7 +62,7 @@ export const EntriesByYearPage = (props: { entries: Entry[] }) => {
                         </section>
                     ))}
                 </main>
-                <SiteFooter hideDonate={true} />
+                <SiteFooter hideDonate={true} clientSettings={clientSettings} />
             </body>
         </html>
     )
@@ -65,10 +71,13 @@ export const EntriesByYearPage = (props: { entries: Entry[] }) => {
 export const EntriesForYearPage = (props: {
     entries: Entry[]
     year: number
+    clientSettings: ClientSettings
 }) => {
-    const entriesByYear = _.groupBy(props.entries, e =>
+    const entriesByYear = lodash.groupBy(props.entries, e =>
         moment(e.published_at as Date).year()
     )
+
+    const { clientSettings } = props
 
     const years = Object.keys(entriesByYear)
         .sort()
@@ -78,7 +87,8 @@ export const EntriesForYearPage = (props: {
     return (
         <html>
             <Head
-                canonicalUrl={`${BAKED_BASE_URL}/entries-by-year/${props.year}`}
+                clientSettings={clientSettings}
+                canonicalUrl={`${clientSettings.BAKED_BASE_URL}/entries-by-year/${props.year}`}
                 pageTitle={`${props.year} Entries`}
                 pageDesc={`Our World in Data entries first published in ${props.year}.`}
             />
@@ -92,7 +102,7 @@ export const EntriesForYearPage = (props: {
                                 {entriesByYear[year].map(entry => (
                                     <li key={entry.slug}>
                                         <a
-                                            href={`${BAKED_BASE_URL}/${entry.slug}`}
+                                            href={`${clientSettings.BAKED_BASE_URL}/${entry.slug}`}
                                         >
                                             {entry.title}
                                         </a>
@@ -102,7 +112,7 @@ export const EntriesForYearPage = (props: {
                         </section>
                     ))}
                 </main>
-                <SiteFooter hideDonate={true} />
+                <SiteFooter hideDonate={true} clientSettings={clientSettings} />
             </body>
         </html>
     )

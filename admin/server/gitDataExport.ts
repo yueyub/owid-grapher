@@ -5,8 +5,8 @@ import * as util from "util"
 import { JsonError, filenamify, exec } from "utils/server/serverUtil"
 import { Dataset } from "db/model/Dataset"
 import { Source } from "db/model/Source"
-import { GIT_DATASETS_DIR, TMP_DIR } from "serverSettings"
-import { GIT_DEFAULT_USERNAME, GIT_DEFAULT_EMAIL } from "settings"
+import { ServerSettings } from "serverSettings"
+import { ClientSettings } from "clientSettings"
 import * as db from "db/db"
 
 async function datasetToReadme(dataset: Dataset): Promise<string> {
@@ -26,11 +26,13 @@ async function execFormatted(cmd: string, args: string[]) {
 export async function removeDatasetFromGitRepo(
     datasetName: string,
     namespace: string,
-    options: { commitName?: string; commitEmail?: string } = {}
+    options: { commitName?: string; commitEmail?: string } = {},
+    serverSettings: ServerSettings,
+    clientSettings: ClientSettings
 ) {
     const { commitName, commitEmail } = options
 
-    const repoDir = path.join(GIT_DATASETS_DIR, namespace)
+    const repoDir = path.join(serverSettings.GIT_DATASETS_DIR, namespace)
 
     if (!fs.existsSync(path.join(repoDir, ".git"))) {
         return
@@ -42,8 +44,8 @@ export async function removeDatasetFromGitRepo(
 
     await execFormatted(
         `cd %s && rm -rf %s && git add -A %s && (git diff-index --quiet HEAD || (git commit -m %s --quiet --author="${commitName ||
-            GIT_DEFAULT_USERNAME} <${commitEmail ||
-            GIT_DEFAULT_EMAIL}>" && git push))`,
+            clientSettings.GIT_DEFAULT_USERNAME} <${commitEmail ||
+            clientSettings.GIT_DEFAULT_EMAIL}>" && git push))`,
         [
             repoDir,
             `${repoDir}/datasets/${datasetName}`,
@@ -61,7 +63,9 @@ export async function syncDatasetToGitRepo(
         commitName?: string
         commitEmail?: string
         commitOnly?: boolean
-    } = {}
+    } = {},
+    serverSettings: ServerSettings,
+    clientSettings: ClientSettings
 ) {
     const { oldDatasetName, commitName, commitEmail, commitOnly } = options
 
@@ -83,7 +87,9 @@ export async function syncDatasetToGitRepo(
         return removeDatasetFromGitRepo(
             oldDatasetName || dataset.name,
             dataset.namespace,
-            options
+            options,
+            serverSettings,
+            clientSettings
         )
     }
 
@@ -91,18 +97,25 @@ export async function syncDatasetToGitRepo(
     if (dataset.namespace !== "owid") return
 
     // Base repository directory for this dataspace
-    const repoDir = path.join(GIT_DATASETS_DIR, dataset.namespace)
+    const repoDir = path.join(
+        serverSettings.GIT_DATASETS_DIR,
+        dataset.namespace
+    )
 
     if (!fs.existsSync(path.join(repoDir, ".git"))) {
         await fs.mkdirp(repoDir)
         await execFormatted(
             `cd %s && git init && git config user.name %s && git config user.email %s`,
-            [repoDir, GIT_DEFAULT_USERNAME, GIT_DEFAULT_EMAIL]
+            [
+                repoDir,
+                clientSettings.GIT_DEFAULT_USERNAME,
+                clientSettings.GIT_DEFAULT_EMAIL
+            ]
         )
     }
 
     // Output dataset to temporary directory
-    const tmpDatasetDir = path.join(TMP_DIR, dataset.filename)
+    const tmpDatasetDir = path.join(serverSettings.TMP_DIR, dataset.filename)
     await fs.mkdirp(tmpDatasetDir)
 
     await Promise.all([
@@ -147,7 +160,8 @@ export async function syncDatasetToGitRepo(
         : `Updating ${dataset.filename}`
     await execFormatted(
         `cd %s && (git diff-index --quiet HEAD || (git commit -m %s --quiet --author="${commitName ||
-            GIT_DEFAULT_USERNAME} <${commitEmail || GIT_DEFAULT_EMAIL}>"${
+            clientSettings.GIT_DEFAULT_USERNAME} <${commitEmail ||
+            clientSettings.GIT_DEFAULT_EMAIL}>"${
             commitOnly ? "" : " && git push))"
         }`,
         [repoDir, commitMsg]

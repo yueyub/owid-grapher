@@ -1,30 +1,29 @@
-import { BAKED_GRAPHER_URL } from "settings"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons/faArrowRight"
 
 import * as React from "react"
 import urljoin = require("url-join")
-import * as _ from "lodash"
-
-import { webpack } from "utils/server/staticGen"
+import * as lodash from "lodash"
 import { ChartConfigProps } from "charts/ChartConfig"
 import { SiteHeader } from "./SiteHeader"
 import { SiteFooter } from "./SiteFooter"
 import { Head } from "./Head"
 import { Post } from "db/model/Post"
+import { ClientSettings } from "clientSettings"
 
 export const ChartPage = (props: {
     chart: ChartConfigProps
+    clientSettings: ClientSettings
     post?: Post.Row
 }) => {
-    const { chart, post } = props
-
+    const { chart, post, clientSettings } = props
+    const baseUrl = clientSettings.BAKED_GRAPHER_URL
     const pageTitle = chart.title
     const pageDesc =
         chart.subtitle || "An interactive visualization from Our World in Data."
-    const canonicalUrl = urljoin(BAKED_GRAPHER_URL, chart.slug as string)
+    const canonicalUrl = urljoin(baseUrl, chart.slug as string)
     const imageUrl = urljoin(
-        BAKED_GRAPHER_URL,
+        baseUrl,
         "exports",
         `${chart.slug}.png?v=${chart.version}`
     )
@@ -56,11 +55,12 @@ export const ChartPage = (props: {
         }
     `
 
-    const variableIds = _.uniq(chart.dimensions.map(d => d.variableId))
+    const variableIds = lodash.uniq(chart.dimensions.map(d => d.variableId))
 
     return (
         <html>
             <Head
+                clientSettings={clientSettings}
                 canonicalUrl={canonicalUrl}
                 pageTitle={pageTitle}
                 pageDesc={pageDesc}
@@ -74,7 +74,6 @@ export const ChartPage = (props: {
                     figure { display: none !important; }
                 `}</style>
                 </noscript>
-                <link rel="stylesheet" href={webpack("commons.css")} />
                 <link
                     rel="preload"
                     href={`/grapher/data/variables/${variableIds.join(
@@ -103,13 +102,11 @@ export const ChartPage = (props: {
                     <noscript id="fallback">
                         <h1>{chart.title}</h1>
                         <p>{chart.subtitle}</p>
-                        <img
-                            src={`${BAKED_GRAPHER_URL}/exports/${chart.slug}.svg`}
-                        />
+                        <img src={`${baseUrl}/exports/${chart.slug}.svg`} />
                         <p>Interactive visualization requires JavaScript</p>
                     </noscript>
                 </main>
-                <SiteFooter />
+                <SiteFooter clientSettings={clientSettings} />
                 <script dangerouslySetInnerHTML={{ __html: script }} />
             </body>
         </html>

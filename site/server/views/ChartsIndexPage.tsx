@@ -1,9 +1,9 @@
-import * as settings from "settings"
+import { ClientSettings } from "clientSettings"
 import * as React from "react"
 import { Head } from "./Head"
 import { SiteHeader } from "./SiteHeader"
 import { SiteFooter } from "./SiteFooter"
-import * as _ from "lodash"
+import * as lodash from "lodash"
 
 export interface ChartIndexItem {
     id: number
@@ -19,11 +19,14 @@ export interface TagWithCharts {
     charts: ChartIndexItem[]
 }
 
-export const ChartsIndexPage = (props: { chartItems: ChartIndexItem[] }) => {
-    const { chartItems } = props
+export const ChartsIndexPage = (props: {
+    chartItems: ChartIndexItem[]
+    clientSettings: ClientSettings
+}) => {
+    const { chartItems, clientSettings } = props
 
-    const allTags = _.sortBy(
-        _.uniqBy(_.flatten(chartItems.map(c => c.tags)), t => t.id),
+    const allTags = lodash.sortBy(
+        lodash.uniqBy(lodash.flatten(chartItems.map(c => c.tags)), t => t.id),
         t => t.name
     ) as TagWithCharts[]
 
@@ -37,13 +40,14 @@ export const ChartsIndexPage = (props: { chartItems: ChartIndexItem[] }) => {
 
     // Sort the charts in each tag
     for (const tag of allTags) {
-        tag.charts = _.sortBy(tag.charts, c => c.title.trim())
+        tag.charts = lodash.sortBy(tag.charts, c => c.title.trim())
     }
 
     return (
         <html>
             <Head
-                canonicalUrl={`${settings.BAKED_BASE_URL}/charts`}
+                clientSettings={clientSettings}
+                canonicalUrl={`${clientSettings.BAKED_BASE_URL}/charts`}
                 pageTitle="Charts"
                 pageDesc="All of the interactive charts on Our World in Data."
             />
@@ -76,7 +80,7 @@ export const ChartsIndexPage = (props: { chartItems: ChartIndexItem[] }) => {
                         </section>
                     ))}
                 </main>
-                <SiteFooter />
+                <SiteFooter clientSettings={clientSettings} />
                 <script>{`window.runChartsIndexPage()`}</script>
             </body>
         </html>

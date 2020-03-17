@@ -17,7 +17,7 @@ import {
     QueryParams
 } from "utils/client/url"
 import { MapProjection } from "./MapProjection"
-import { BAKED_GRAPHER_URL } from "settings"
+import { ClientSettings } from "clientSettings"
 import { ObservableUrl } from "./UrlBinding"
 
 export interface ChartQueryParams {
@@ -42,6 +42,7 @@ export class ChartUrl implements ObservableUrl {
     chartQueryStr: string = "?"
     mapQueryStr: string = "?"
     debounceMode: boolean = false
+    private clientSettings = new ClientSettings() // todo: remove
 
     constructor(chart: ChartConfig, queryStr?: string) {
         this.chart = chart
@@ -108,7 +109,7 @@ export class ChartUrl implements ObservableUrl {
 
     @computed get baseUrl(): string | undefined {
         if (this.chart.isPublished)
-            return `${BAKED_GRAPHER_URL}/${this.chart.data.slug}`
+            return `${this.clientSettings.BAKED_GRAPHER_URL}/${this.chart.data.slug}`
         else return undefined
     }
 

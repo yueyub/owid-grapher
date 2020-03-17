@@ -5,14 +5,14 @@ const googleTrends = require("google-trends-api")
 const asciify = require("asciify-string")
 
 async function getTitles() {
-    await wpdb.connect()
+    await wpdb.dbInstance.connect()
 
-    const pageRows = await wpdb.query(`
+    const pageRows = await wpdb.dbInstance.query(`
         SELECT post_title FROM wp_posts AS posts
         WHERE (posts.post_type='page' OR posts.post_type='post') AND posts.post_status='publish' ORDER BY post_title DESC
     `)
 
-    await wpdb.end()
+    await wpdb.dbInstance.end()
 
     return pageRows.map(row => asciify(row.post_title))
 }

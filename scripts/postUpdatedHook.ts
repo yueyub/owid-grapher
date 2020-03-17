@@ -1,8 +1,12 @@
 import { syncPostToGrapher } from "db/model/Post"
 import * as parseArgs from "minimist"
-import { BAKE_ON_CHANGE } from "serverSettings"
 import { enqueueDeploy } from "deploy/queue"
 import { exit } from "db/cleanup"
+
+import { ServerSettings } from "serverSettings"
+const serverSettings = new ServerSettings()
+const { BAKE_ON_CHANGE } = serverSettings
+
 const argv = parseArgs(process.argv.slice(2))
 
 async function main(
@@ -15,11 +19,14 @@ async function main(
     const slug = await syncPostToGrapher(postId)
 
     if (BAKE_ON_CHANGE) {
-        await enqueueDeploy({
-            authorName: name,
-            authorEmail: email,
-            message: slug ? `Updating ${slug}` : `Deleting ${postSlug}`
-        })
+        await enqueueDeploy(
+            {
+                authorName: name,
+                authorEmail: email,
+                message: slug ? `Updating ${slug}` : `Deleting ${postSlug}`
+            },
+            serverSettings
+        )
     }
 
     exit()

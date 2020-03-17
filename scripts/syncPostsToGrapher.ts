@@ -6,7 +6,7 @@ async function main() {
     try {
         await syncPostsToGrapher()
     } finally {
-        await wpdb.end()
+        await wpdb.dbInstance.end()
         await db.end()
     }
 }

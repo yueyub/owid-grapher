@@ -3,13 +3,13 @@ import * as db from "db/db"
 import { Post } from "db/model/Post"
 import { decodeHTML } from "entities"
 import { Tag } from "db/model/Tag"
-import _ = require("lodash")
+import lodash = require("lodash")
 
 async function main() {
     try {
-        const categoriesByPostId = await wpdb.getCategoriesByPostId()
+        const categoriesByPostId = await wpdb.dbInstance.getCategoriesByPostId()
 
-        const postRows = await wpdb.query(
+        const postRows = await wpdb.dbInstance.query(
             "select * from wp_posts where (post_type='page' or post_type='post') AND post_status != 'trash'"
         )
 
@@ -50,10 +50,10 @@ async function main() {
             // if (matchingTags.map(t => t.name).includes(post.post_title)) {
             //     tagIds.push(1640)
             // }
-            await Post.setTags(post.ID, _.uniq(tagIds))
+            await Post.setTags(post.ID, lodash.uniq(tagIds))
         }
     } finally {
-        await wpdb.end()
+        await wpdb.dbInstance.end()
         await db.end()
     }
 }

@@ -1,11 +1,18 @@
 // This import has side-effects to do with React import binding, keep it up here
-import { ADMIN_SERVER_PORT, ADMIN_SERVER_HOST } from "settings"
 
-import { app } from "./app"
+import { ServerSettings } from "serverSettings"
+import { ClientSettings } from "clientSettings"
+
+import { makeApp } from "./app"
 
 import * as db from "db/db"
 import * as wpdb from "db/wpdb"
 import { log } from "utils/server/log"
+
+const serverSettings = new ServerSettings()
+const clientSettings = new ClientSettings()
+
+const app = makeApp(serverSettings, clientSettings)
 
 async function main() {
     try {
@@ -13,7 +20,7 @@ async function main() {
 
         // The Grapher should be able to work without Wordpress being set up.
         try {
-            await wpdb.connect()
+            await wpdb.dbInstance.connect()
         } catch (error) {
             console.error(error)
             console.log(
@@ -21,13 +28,17 @@ async function main() {
             )
         }
 
-        app.listen(ADMIN_SERVER_PORT, ADMIN_SERVER_HOST, () => {
-            console.log(
-                `owid-admin server started on ${ADMIN_SERVER_HOST}:${ADMIN_SERVER_PORT}`
-            )
-        })
-    } catch (e) {
-        log.error(e)
+        app.listen(
+            clientSettings.ADMIN_SERVER_PORT,
+            clientSettings.ADMIN_SERVER_HOST,
+            () => {
+                console.log(
+                    `owid-admin server started on ${clientSettings.ADMIN_SERVER_HOST}:${clientSettings.ADMIN_SERVER_PORT}`
+                )
+            }
+        )
+    } catch (err) {
+        log.error(err, serverSettings)
         process.exit(1)
     }
 }

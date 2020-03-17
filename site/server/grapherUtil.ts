@@ -2,19 +2,19 @@ import * as glob from "glob"
 import * as parseUrl from "url-parse"
 const exec = require("child-process-promise").exec
 import * as path from "path"
-import * as _ from "lodash"
+import * as lodash from "lodash"
 import * as md5 from "md5"
 
-import { BAKED_BASE_URL } from "settings"
-import { BAKED_SITE_DIR } from "serverSettings"
+import { ClientSettings } from "clientSettings"
+import { ServerSettings } from "serverSettings"
 import * as db from "db/db"
-import { bakeChartsToImages } from "site/server/bakeChartsToImages"
+import { bakeChartsToImages } from "site/server/ChartBaker"
 import { log } from "utils/server/log"
 
 // Given a grapher url with query string, create a key to match export filenames
 export function grapherUrlToFilekey(grapherUrl: string) {
     const url = parseUrl(grapherUrl)
-    const slug = _.last(url.pathname.split("/")) as string
+    const slug = lodash.last(url.pathname.split("/")) as string
     const queryStr = url.query as any
     return `${slug}${queryStr ? "-" + md5(queryStr) : ""}`
 }
@@ -49,8 +49,15 @@ export async function mapSlugsToIds(): Promise<{ [slug: string]: number }> {
     return slugToId
 }
 
-export async function bakeGrapherUrls(urls: string[]) {
-    const currentExports = await getGrapherExportsByUrl()
+export async function bakeGrapherUrls(
+    urls: string[],
+    serverSettings: ServerSettings,
+    clientSettings: ClientSettings
+) {
+    const currentExports = await getGrapherExportsByUrl(
+        serverSettings,
+        clientSettings
+    )
     const slugToId = await mapSlugsToIds()
     const toBake = []
 
@@ -62,7 +69,7 @@ export async function bakeGrapherUrls(urls: string[]) {
             continue
         }
 
-        const slug = _.last(parseUrl(url).pathname.split("/"))
+        const slug = lodash.last(parseUrl(url).pathname.split("/"))
         if (!slug) {
             log.warn(`Invalid chart url ${url}`)
             continue
@@ -89,16 +96,22 @@ export async function bakeGrapherUrls(urls: string[]) {
     }
 
     if (toBake.length > 0) {
-        await bakeChartsToImages(toBake, `${BAKED_SITE_DIR}/exports`)
+        await bakeChartsToImages(
+            toBake,
+            `${serverSettings.BAKED_SITE_DIR}/exports`
+        )
     }
 }
 
-export async function getGrapherExportsByUrl(): Promise<{
+export async function getGrapherExportsByUrl(
+    serverSettings: ServerSettings,
+    clientSettings: ClientSettings
+): Promise<{
     get: (grapherUrl: string) => ChartExportMeta
 }> {
     // Index the files to see what we have available, using the most recent version
     // if multiple exports exist
-    const files = glob.sync(`${BAKED_SITE_DIR}/exports/*.svg`)
+    const files = glob.sync(`${serverSettings.BAKED_SITE_DIR}/exports/*.svg`)
     const exportsByKey = new Map()
     for (const filepath of files) {
         const filename = path.basename(filepath)
@@ -110,7 +123,7 @@ export async function getGrapherExportsByUrl(): Promise<{
         if (!current || current.version < versionNumber) {
             exportsByKey.set(key, {
                 key: key,
-                svgUrl: `${BAKED_BASE_URL}/exports/${filename}`,
+                svgUrl: `${clientSettings.BAKED_BASE_URL}/exports/${filename}`,
                 version: versionNumber,
                 width: parseInt(width),
                 height: parseInt(height)
@@ -147,7 +160,7 @@ export async function getIndexableCharts(): Promise<ChartItemWithTags[]> {
         c.tags = []
     }
 
-    const chartsById = _.keyBy(chartItems, c => c.id)
+    const chartsById = lodash.keyBy(chartItems, c => c.id)
 
     for (const ct of chartTags) {
         // XXX hardcoded filtering to public parent tags

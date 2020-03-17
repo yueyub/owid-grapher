@@ -1,6 +1,5 @@
-import { BAKED_BASE_URL } from "settings"
 import * as React from "react"
-import { webpack } from "utils/server/staticGen"
+import { ClientSettings } from "clientSettings"
 
 export const Head = (props: {
     canonicalUrl: string
@@ -8,8 +7,9 @@ export const Head = (props: {
     pageDesc?: string
     imageUrl?: string
     children?: any
+    clientSettings: ClientSettings
 }) => {
-    const { canonicalUrl } = props
+    const { canonicalUrl, clientSettings } = props
     const pageTitle = props.pageTitle || `Our World in Data`
     const fullPageTitle = props.pageTitle
         ? `${props.pageTitle} - Our World in Data`
@@ -17,7 +17,9 @@ export const Head = (props: {
     const pageDesc =
         props.pageDesc ||
         "Research and data to make progress against the world’s largest problems"
-    const imageUrl = props.imageUrl || `${BAKED_BASE_URL}/default-thumbnail.jpg`
+    const imageUrl =
+        props.imageUrl ||
+        `${clientSettings.BAKED_BASE_URL}/default-thumbnail.jpg`
 
     return (
         <head>
@@ -54,8 +56,14 @@ export const Head = (props: {
                 href="https://fonts.googleapis.com/css?family=Lato:300,400,400i,700,700i|Playfair+Display:400,700"
                 rel="stylesheet"
             />
-            <link rel="stylesheet" href={webpack("commons.css", "site")} />
-            <link rel="stylesheet" href={webpack("owid.css", "site")} />
+            <link
+                rel="stylesheet"
+                href={clientSettings.getWebPackUrl("commons.css")}
+            />
+            <link
+                rel="stylesheet"
+                href={clientSettings.getWebPackUrl("owid.css")}
+            />
             {props.children}
         </head>
     )

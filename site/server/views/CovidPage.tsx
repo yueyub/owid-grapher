@@ -1,7 +1,6 @@
 import * as React from "react"
-import * as settings from "settings"
+import { ClientSettings } from "clientSettings"
 
-import { webpack } from "utils/server/staticGen"
 import { Head } from "./Head"
 import { SiteHeader } from "./SiteHeader"
 import { SiteFooter } from "./SiteFooter"
@@ -10,15 +9,15 @@ import { SiteFooter } from "./SiteFooter"
 // This page is only used in development.
 // It is not intended to be exposed to the public.
 
-export const CovidPage = () => {
+export const CovidPage = (props: { clientSettings: ClientSettings }) => {
+    const { clientSettings } = props
     return (
         <html>
             <Head
-                canonicalUrl={`${settings.BAKED_BASE_URL}/covid`}
+                clientSettings={clientSettings}
+                canonicalUrl={`${clientSettings.BAKED_BASE_URL}/covid`}
                 pageTitle="COVID-19"
-            >
-                <link rel="stylesheet" href={webpack("commons.css")} />
-            </Head>
+            ></Head>
             <body className="CovidPage">
                 <SiteHeader />
                 <main>
@@ -155,7 +154,7 @@ export const CovidPage = () => {
                         </div>
                     </article>
                 </main>
-                <SiteFooter />
+                <SiteFooter clientSettings={clientSettings} />
             </body>
         </html>
     )

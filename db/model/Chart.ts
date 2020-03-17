@@ -12,7 +12,7 @@ import { ChartConfigProps } from "charts/ChartConfig"
 import { getVariableData } from "./Variable"
 import { User } from "./User"
 import { ChartRevision } from "./ChartRevision"
-import { PUBLIC_TAG_PARENT_IDS } from "settings"
+import { PUBLIC_TAG_PARENT_IDS } from "clientSettings"
 
 @Entity("charts")
 export class Chart extends BaseEntity {

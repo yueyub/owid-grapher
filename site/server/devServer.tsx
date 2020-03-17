@@ -18,14 +18,25 @@ import {
     renderBlogByPageNum,
     renderExplorableIndicatorsJson,
     renderCovidPage
-} from "site/server/siteBaking"
-import { chartPage, chartDataJson } from "site/server/chartBaking"
+} from "site/server/SiteBaker"
 import {
+    renderReactChartPageToHtml,
+    chartDataJson
+} from "site/server/ChartBaker"
+
+import { ServerSettings } from "serverSettings"
+import { ClientSettings } from "clientSettings"
+
+const clientSettings = new ClientSettings()
+const {
     BAKED_DEV_SERVER_PORT,
     BAKED_DEV_SERVER_HOST,
+    BLOG_POSTS_PER_PAGE,
     BAKED_GRAPHER_URL
-} from "settings"
-import { WORDPRESS_DIR, BASE_DIR, BAKED_SITE_DIR } from "serverSettings"
+} = clientSettings
+const serverSettings = new ServerSettings()
+const { WORDPRESS_DIR, BASE_DIR, BAKED_SITE_DIR } = serverSettings
+
 import * as wpdb from "db/wpdb"
 import * as db from "db/db"
 import { expectInt, JsonError } from "utils/server/serverUtil"
@@ -33,7 +44,7 @@ import { embedSnippet } from "site/server/embedCharts"
 import { countryProfilePage, countriesIndexPage } from "./countryProfiles"
 import { makeSitemap } from "./sitemap"
 import { OldChart } from "db/model/Chart"
-import { chartToSVG } from "./svgPngExport"
+import { chartToSVG } from "./ChartBaker"
 
 const devServer = express()
 
@@ -42,15 +53,15 @@ devServer.get("/sitemap.xml", async (req, res) => {
 })
 
 devServer.get("/atom.xml", async (req, res) => {
-    res.send(await makeAtomFeed())
+    res.send(await makeAtomFeed(clientSettings))
 })
 
 devServer.get("/entries-by-year", async (req, res) => {
-    res.send(await entriesByYearPage())
+    res.send(await entriesByYearPage(clientSettings))
 })
 
 devServer.get(`/entries-by-year/:year`, async (req, res) => {
-    res.send(await entriesByYearPage(parseInt(req.params.year)))
+    res.send(await entriesByYearPage(clientSettings, parseInt(req.params.year)))
 })
 
 devServer.get("/grapher/data/variables/:variableIds.json", async (req, res) => {
@@ -63,7 +74,7 @@ devServer.get("/grapher/data/variables/:variableIds.json", async (req, res) => {
 })
 
 devServer.get("/grapher/embedCharts.js", async (req, res) => {
-    res.send(embedSnippet())
+    res.send(embedSnippet(clientSettings))
 })
 
 devServer.get("/grapher/latest", async (req, res) => {
@@ -80,28 +91,28 @@ devServer.get("/grapher/latest", async (req, res) => {
 devServer.get("/grapher/:slug", async (req, res) => {
     // XXX add dev-prod parity for this
     res.set("Access-Control-Allow-Origin", "*")
-    res.send(await chartPage(req.params.slug))
+    res.send(await renderReactChartPageToHtml(req.params.slug, clientSettings))
 })
 
 devServer.get("/", async (req, res) => {
-    res.send(await renderFrontPage())
+    res.send(await renderFrontPage(clientSettings))
 })
 
 devServer.get("/donate", async (req, res) => {
-    res.send(await renderDonatePage())
+    res.send(await renderDonatePage(clientSettings))
 })
 
 devServer.get("/charts", async (req, res) => {
-    res.send(await renderChartsPage())
+    res.send(await renderChartsPage(clientSettings))
 })
 
 devServer.get("/explore", async (req, res) => {
-    res.send(await renderExplorePage())
+    res.send(await renderExplorePage(clientSettings))
 })
 
 // Route only available on the dev server
 devServer.get("/covid", async (req, res) => {
-    res.send(await renderCovidPage())
+    res.send(await renderCovidPage(clientSettings))
 })
 
 devServer.get("/explore/indicators.json", async (req, res) => {
@@ -109,24 +120,30 @@ devServer.get("/explore/indicators.json", async (req, res) => {
 })
 
 devServer.get("/search", async (req, res) => {
-    res.send(await renderSearchPage())
+    res.send(await renderSearchPage(clientSettings))
 })
 
 devServer.get("/blog", async (req, res) => {
-    res.send(await renderBlogByPageNum(1))
+    res.send(await renderBlogByPageNum(1, BLOG_POSTS_PER_PAGE, clientSettings))
 })
 
 devServer.get("/blog/page/:pageno", async (req, res) => {
     const pagenum = parseInt(req.params.pageno, 10)
     if (!isNaN(pagenum)) {
-        res.send(await renderBlogByPageNum(isNaN(pagenum) ? 1 : pagenum))
+        res.send(
+            await renderBlogByPageNum(
+                isNaN(pagenum) ? 1 : pagenum,
+                BLOG_POSTS_PER_PAGE,
+                clientSettings
+            )
+        )
     } else {
         throw new Error("invalid page number")
     }
 })
 
 devServer.get("/headerMenu.json", async (req, res) => {
-    res.send(await renderMenuJson())
+    res.send(await renderMenuJson(clientSettings))
 })
 
 devServer.use(
@@ -153,7 +170,9 @@ devServer.use("/", express.static(path.join(BASE_DIR, "public")))
 devServer.get("/indicator/:variableId/:country", async (req, res) => {
     const variableId = expectInt(req.params.variableId)
 
-    res.send(await pagePerVariable(variableId, req.params.country))
+    res.send(
+        await pagePerVariable(variableId, req.params.country, clientSettings)
+    )
 })
 
 devServer.get("/countries", async (req, res) => {
@@ -165,21 +184,21 @@ devServer.get("/country/:countrySlug", async (req, res) => {
 })
 
 devServer.get("/feedback", async (req, res) => {
-    res.send(await feedbackPage())
+    res.send(await feedbackPage(clientSettings))
 })
 
 devServer.get("/*", async (req, res) => {
     const slug = req.path.replace(/^\//, "").replace("/", "__")
     try {
-        res.send(await renderPageBySlug(slug))
+        res.send(await renderPageBySlug(slug, serverSettings, clientSettings))
     } catch (e) {
         console.error(e)
-        res.send(await renderNotFoundPage())
+        res.send(await renderNotFoundPage(clientSettings))
     }
 })
 
 async function main() {
-    await wpdb.connect()
+    await wpdb.dbInstance.connect()
     await db.connect()
     devServer.listen(BAKED_DEV_SERVER_PORT, BAKED_DEV_SERVER_HOST, () => {
         console.log(

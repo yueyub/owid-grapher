@@ -1,15 +1,18 @@
 // Send error to slack webhook, code adapted from express-error-slack https://github.com/chunkai1312/express-error-slack/blob/master/src/sendErrorToSlack.js
-import { SLACK_ERRORS_WEBHOOK_URL } from "serverSettings"
+import { ServerSettings } from "serverSettings"
 import Slack = require("slack-node")
-import _ = require("lodash")
+import lodash = require("lodash")
 
 export namespace log {
-    export async function sendErrorToSlack(err: any) {
+    async function sendErrorToSlack(
+        err: any,
+        SLACK_ERRORS_WEBHOOK_URL: string
+    ) {
         const slack = new Slack()
         slack.setWebhook(SLACK_ERRORS_WEBHOOK_URL)
 
         function createCodeBlock(title: string, code: any) {
-            if (_.isEmpty(code)) return ""
+            if (lodash.isEmpty(code)) return ""
             code =
                 typeof code === "string"
                     ? code.trim()
@@ -42,8 +45,9 @@ export namespace log {
         })
     }
 
-    export async function error(err: any) {
-        if (SLACK_ERRORS_WEBHOOK_URL) sendErrorToSlack(err)
+    export async function error(err: any, serverSettings: ServerSettings) {
+        if (serverSettings.SLACK_ERRORS_WEBHOOK_URL)
+            sendErrorToSlack(err, serverSettings.SLACK_ERRORS_WEBHOOK_URL)
         console.error(err)
     }
 

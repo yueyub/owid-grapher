@@ -1,32 +1,35 @@
 import * as mysql from "mysql"
 import * as typeorm from "typeorm"
 import * as Knex from "knex"
-import { DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT } from "serverSettings"
+import { ServerSettings } from "serverSettings"
+const serverSettings = new ServerSettings()
+const { DB_NAME, DB_USER, DB_PASS, DB_HOST, DB_PORT } = serverSettings
+
 import { registerExitHandler } from "./cleanup"
-let connection: typeorm.Connection
+let ormDbConnection: typeorm.Connection
 
 export async function connect() {
-    return getConnection()
+    return getOrmDbConnection()
 }
 
-async function getConnection() {
-    if (connection) return connection
+async function getOrmDbConnection() {
+    if (ormDbConnection) return ormDbConnection
 
     try {
-        connection = typeorm.getConnection()
+        ormDbConnection = typeorm.getConnection()
     } catch (e) {
         if (e.name === "ConnectionNotFoundError") {
-            connection = await typeorm.createConnection()
+            ormDbConnection = await typeorm.createConnection()
         } else {
             throw e
         }
     }
 
     registerExitHandler(async () => {
-        if (connection) await connection.close()
+        if (ormDbConnection) await ormDbConnection.close()
     })
 
-    return connection
+    return ormDbConnection
 }
 
 export class TransactionContext {
@@ -51,20 +54,20 @@ export class TransactionContext {
 export async function transaction<T>(
     callback: (t: TransactionContext) => Promise<T>
 ): Promise<T> {
-    return (await getConnection()).transaction(async manager => {
+    return (await getOrmDbConnection()).transaction(async manager => {
         const t = new TransactionContext(manager)
         return callback(t)
     })
 }
 
 export async function query(queryStr: string, params?: any[]): Promise<any> {
-    const conn = await getConnection()
+    const conn = await getOrmDbConnection()
     return conn.query(params ? mysql.format(queryStr, params) : queryStr)
 }
 
 // For operations that modify data (TODO: handling to check query isn't used for this)
 export async function execute(queryStr: string, params?: any[]): Promise<any> {
-    const conn = await getConnection()
+    const conn = await getOrmDbConnection()
     return conn.query(params ? mysql.format(queryStr, params) : queryStr)
 }
 
@@ -73,7 +76,7 @@ export async function get(queryStr: string, params?: any[]): Promise<any> {
 }
 
 export async function end() {
-    if (connection) await connection.close()
+    if (ormDbConnection) await ormDbConnection.close()
     if (knexInstance) await knexInstance.destroy()
 }
 

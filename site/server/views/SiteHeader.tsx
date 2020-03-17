@@ -4,9 +4,11 @@ import { faBars } from "@fortawesome/free-solid-svg-icons/faBars"
 import { faEnvelopeOpenText } from "@fortawesome/free-solid-svg-icons/faEnvelopeOpenText"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 
-import { BAKED_BASE_URL } from "settings"
+import { ClientSettings } from "clientSettings"
 
 export const SiteHeader = () => {
+    // Todo: cleanup
+    const clientSettings = new ClientSettings()
     return (
         <header className="site-header">
             <div className="wrapper site-navigation-bar">
@@ -110,7 +112,7 @@ export const SiteHeader = () => {
                         className="oxford-logo"
                     >
                         <img
-                            src={`${BAKED_BASE_URL}/oms-logo.svg`}
+                            src={`${clientSettings.BAKED_BASE_URL}/oms-logo.svg`}
                             alt="Oxford Martin School logo"
                         />
                     </a>
@@ -119,7 +121,7 @@ export const SiteHeader = () => {
                         className="gcdl-logo"
                     >
                         <img
-                            src={`${BAKED_BASE_URL}/gcdl-logo-narrow.png`}
+                            src={`${clientSettings.BAKED_BASE_URL}/gcdl-logo-narrow.png`}
                             alt="Global Change Data Lab logo"
                         />
                     </a>

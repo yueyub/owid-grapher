@@ -1,7 +1,6 @@
 import * as React from "react"
-import * as settings from "settings"
+import { ClientSettings } from "clientSettings"
 
-import { webpack } from "utils/server/staticGen"
 import { Head } from "./Head"
 import { SiteHeader } from "./SiteHeader"
 import { SiteFooter } from "./SiteFooter"
@@ -15,7 +14,8 @@ import { SiteFooter } from "./SiteFooter"
 //
 // -@jasoncrawford 2 Dec 2019
 
-export const ExplorePage = () => {
+export const ExplorePage = (props: { clientSettings: ClientSettings }) => {
+    const { clientSettings } = props
     const script = `
         var div = document.getElementById('explore');
         var view = window.ExploreView.bootstrap({ containerNode: div, queryStr: window.location.search });
@@ -25,17 +25,16 @@ export const ExplorePage = () => {
     return (
         <html>
             <Head
-                canonicalUrl={`${settings.BAKED_BASE_URL}/explore`}
+                clientSettings={clientSettings}
+                canonicalUrl={`${clientSettings.BAKED_BASE_URL}/explore`}
                 pageTitle="Explore"
-            >
-                <link rel="stylesheet" href={webpack("commons.css")} />
-            </Head>
+            ></Head>
             <body className="ExplorePage">
                 <SiteHeader />
                 <main>
                     <div id="explore"></div>
                 </main>
-                <SiteFooter />
+                <SiteFooter clientSettings={clientSettings} />
                 <script dangerouslySetInnerHTML={{ __html: script }} />
             </body>
         </html>

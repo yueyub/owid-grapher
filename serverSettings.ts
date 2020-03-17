@@ -1,7 +1,6 @@
 // This is where server-side only, potentially sensitive settings enter from the environment
 // DO NOT store sensitive strings in this file itself, as it is checked in to git!
 
-import { ENV } from "settings"
 import * as path from "path"
 import { parseBool } from "utils/string"
 
@@ -14,82 +13,97 @@ function expect(key: string): string {
     }
 }
 
-export const BASE_DIR: string = __dirname
-export const SECRET_KEY: string =
-    ENV === "production" ? expect("SECRET_KEY") : "not a very secret key at all"
-export const SESSION_COOKIE_AGE: number = process.env.SESSION_COOKIE_AGE
-    ? parseInt(process.env.SESSION_COOKIE_AGE)
-    : 1209600
-export const ALGOLIA_SECRET_KEY: string = process.env.ALGOLIA_SECRET_KEY || ""
-export const STRIPE_SECRET_KEY: string = process.env.STRIPE_SECRET_KEY || ""
+export class ServerSettings {
+    BASE_DIR: string = __dirname
 
-// Grapher database settings
-export const DB_NAME: string = process.env.DB_NAME || ""
-export const DB_USER: string = process.env.DB_USER || "root"
-export const DB_PASS: string = process.env.DB_PASS || ""
-export const DB_HOST: string = process.env.DB_HOST || "localhost"
-export const DB_PORT: number = process.env.DB_PORT
-    ? parseInt(process.env.DB_PORT)
-    : 3306
+    ENV =
+        process.env.ENV === "production" ||
+        process.env.NODE_ENV === "production"
+            ? "production"
+            : "development"
 
-// Wordpress database settings
-export const WORDPRESS_DB_NAME: string =
-    process.env.WORDPRESS_DB_NAME || process.env.DB_NAME || ""
-export const WORDPRESS_DB_USER: string =
-    process.env.WORDPRESS_DB_USER || process.env.DB_USER || "root"
-export const WORDPRESS_DB_PASS: string =
-    process.env.WORDPRESS_DB_PASS || process.env.DB_PASS || ""
-export const WORDPRESS_DB_HOST: string =
-    process.env.WORDPRESS_DB_HOST || process.env.DB_HOST || "localhost"
-export const WORDPRESS_DB_PORT: number = process.env.WORDPRESS_DB_PORT
-    ? parseInt(process.env.WORDPRESS_DB_PORT)
-    : process.env.DB_PORT
-    ? parseInt(process.env.DB_PORT)
-    : 3306
-export const WORDPRESS_API_USER: string = process.env.WORDPRESS_API_USER || ""
-export const WORDPRESS_API_PASS: string = process.env.WORDPRESS_API_PASS || ""
+    SECRET_KEY: string =
+        this.ENV === "production"
+            ? expect("SECRET_KEY")
+            : "not a very secret key at all"
 
-// Where the static build output goes
-export const BAKED_SITE_DIR: string =
-    process.env.BAKED_SITE_DIR || path.join(BASE_DIR, "bakedSite")
-export const WEBPACK_OUTPUT_PATH: string =
-    process.env.WEBPACK_OUTPUT_PATH || path.join(BASE_DIR, "dist/webpack")
+    SESSION_COOKIE_AGE: number = process.env.SESSION_COOKIE_AGE
+        ? parseInt(process.env.SESSION_COOKIE_AGE)
+        : 1209600
 
-// Settings for automated email sending, e.g. for admin invites
-export const EMAIL_HOST: string = process.env.EMAIL_HOST || "smtp.mail.com"
-export const EMAIL_PORT: number = process.env.EMAIL_PORT
-    ? parseInt(process.env.EMAIL_PORT)
-    : 443
-export const EMAIL_HOST_USER: string = process.env.EMAIL_HOST_USER || "user"
-export const EMAIL_HOST_PASSWORD: string =
-    process.env.EMAIL_HOST_PASSWORD || "password"
+    ALGOLIA_SECRET_KEY: string = process.env.ALGOLIA_SECRET_KEY || ""
 
-// Wordpress target settings
-export const WORDPRESS_DIR: string = process.env.WORDPRESS_DIR || ""
-export const HTTPS_ONLY: boolean = true
+    STRIPE_SECRET_KEY: string = process.env.STRIPE_SECRET_KEY || ""
 
-// Node slack webhook to report errors to using express-error-slack
-export const SLACK_ERRORS_WEBHOOK_URL: string =
-    process.env.SLACK_ERRORS_WEBHOOK_URL || ""
+    // Grapher database settings
+    DB_NAME: string = process.env.DB_NAME || ""
+    DB_USER: string = process.env.DB_USER || "root"
+    DB_PASS: string = process.env.DB_PASS || ""
+    DB_HOST: string = process.env.DB_HOST || "localhost"
+    DB_PORT: number = process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306
 
-// Where the git exports go
-export const GIT_DATASETS_DIR: string =
-    process.env.GIT_DATASETS_DIR || path.join(BASE_DIR, "datasetsExport")
-export const TMP_DIR: string = process.env.TMP_DIR || "/tmp"
+    // Wordpress database settings
+    WORDPRESS_DB_NAME: string =
+        process.env.WORDPRESS_DB_NAME || process.env.DB_NAME || ""
+    WORDPRESS_DB_USER: string =
+        process.env.WORDPRESS_DB_USER || process.env.DB_USER || "root"
+    WORDPRESS_DB_PASS: string =
+        process.env.WORDPRESS_DB_PASS || process.env.DB_PASS || ""
+    WORDPRESS_DB_HOST: string =
+        process.env.WORDPRESS_DB_HOST || process.env.DB_HOST || "localhost"
+    WORDPRESS_DB_PORT: number = process.env.WORDPRESS_DB_PORT
+        ? parseInt(process.env.WORDPRESS_DB_PORT)
+        : process.env.DB_PORT
+        ? parseInt(process.env.DB_PORT)
+        : 3306
+    WORDPRESS_API_USER: string = process.env.WORDPRESS_API_USER || ""
+    WORDPRESS_API_PASS: string = process.env.WORDPRESS_API_PASS || ""
 
-export const UNCATEGORIZED_TAG_ID: number = process.env.UNCATEGORIZED_TAG_ID
-    ? parseInt(process.env.UNCATEGORIZED_TAG_ID as any)
-    : 375
+    // Where the static build output goes
+    BAKED_SITE_DIR: string =
+        process.env.BAKED_SITE_DIR || path.join(this.BASE_DIR, "bakedSite")
+    WEBPACK_OUTPUT_PATH: string =
+        process.env.WEBPACK_OUTPUT_PATH ||
+        path.join(this.BASE_DIR, "dist/webpack")
 
-// Should the static site output be baked when relevant database items change?
-export const BAKE_ON_CHANGE: boolean = process.env.BAKE_ON_CHANGE
-    ? parseBool(process.env.BAKE_ON_CHANGE)
-    : ENV === "production"
-    ? true
-    : false
+    // Settings for automated email sending, e.g. for admin invites
+    EMAIL_HOST: string = process.env.EMAIL_HOST || "smtp.mail.com"
+    EMAIL_PORT: number = process.env.EMAIL_PORT
+        ? parseInt(process.env.EMAIL_PORT)
+        : 443
+    EMAIL_HOST_USER: string = process.env.EMAIL_HOST_USER || "user"
+    EMAIL_HOST_PASSWORD: string = process.env.EMAIL_HOST_PASSWORD || "password"
 
-// Deploy queue settings
-export const DEPLOY_QUEUE_FILE_PATH =
-    process.env.DEPLOY_QUEUE_FILE_PATH || path.join(BASE_DIR, "./.queue")
-export const DEPLOY_PENDING_FILE_PATH =
-    process.env.DEPLOY_PENDING_FILE_PATH || path.join(BASE_DIR, "./.pending")
+    // Wordpress target settings
+    WORDPRESS_DIR: string = process.env.WORDPRESS_DIR || ""
+    HTTPS_ONLY: boolean = true
+
+    // Node slack webhook to report errors to using express-error-slack
+    SLACK_ERRORS_WEBHOOK_URL: string =
+        process.env.SLACK_ERRORS_WEBHOOK_URL || ""
+
+    // Where the git exports go
+    GIT_DATASETS_DIR: string =
+        process.env.GIT_DATASETS_DIR ||
+        path.join(this.BASE_DIR, "datasetsExport")
+    TMP_DIR: string = process.env.TMP_DIR || "/tmp"
+
+    UNCATEGORIZED_TAG_ID: number = process.env.UNCATEGORIZED_TAG_ID
+        ? parseInt(process.env.UNCATEGORIZED_TAG_ID as any)
+        : 375
+
+    // Should the static site output be baked when relevant database items change?
+    BAKE_ON_CHANGE: boolean = process.env.BAKE_ON_CHANGE
+        ? parseBool(process.env.BAKE_ON_CHANGE)
+        : this.ENV === "production"
+        ? true
+        : false
+
+    // Deploy queue settings
+    DEPLOY_QUEUE_FILE_PATH =
+        process.env.DEPLOY_QUEUE_FILE_PATH ||
+        path.join(this.BASE_DIR, "./.queue")
+    DEPLOY_PENDING_FILE_PATH =
+        process.env.DEPLOY_PENDING_FILE_PATH ||
+        path.join(this.BASE_DIR, "./.pending")
+}

@@ -1,33 +1,39 @@
 import * as fs from "fs-extra"
 import * as path from "path"
 import * as glob from "glob"
-import { without } from "lodash"
 import * as shell from "shelljs"
-import * as _ from "lodash"
+import * as lodash from "lodash"
 import * as cheerio from "cheerio"
 import * as wpdb from "db/wpdb"
 import * as db from "db/db"
-import * as settings from "settings"
+import * as React from "react"
+import * as ReactDOMServer from "react-dom/server"
+import { ClientSettings } from "clientSettings"
+import { ServerSettings } from "serverSettings"
+
 import { formatPost, extractFormattingOptions } from "./formatting"
+
 import { LongFormPage } from "./views/LongFormPage"
-import { BASE_DIR, BAKED_SITE_DIR, WORDPRESS_DIR } from "serverSettings"
-const { BLOG_POSTS_PER_PAGE } = settings
+import { BlogIndexPage } from "./views/BlogIndexPage"
+import { FrontPage } from "./views/FrontPage"
+import { ChartsIndexPage, ChartIndexItem } from "./views/ChartsIndexPage"
+import { ExplorePage } from "./views/ExplorePage"
+import { CovidPage } from "./views/CovidPage"
+import { SearchPage } from "./views/SearchPage"
+import { NotFoundPage } from "./views/NotFoundPage"
+import { DonatePage } from "./views/DonatePage"
+import { SubscribePage } from "./views/SubscribePage"
 import {
-    renderToHtmlPage,
-    renderFrontPage,
-    renderSubscribePage,
-    renderBlogByPageNum,
-    renderChartsPage,
-    renderExplorePage,
-    renderMenuJson,
-    renderSearchPage,
-    renderDonatePage,
-    entriesByYearPage,
-    makeAtomFeed,
-    feedbackPage,
-    renderNotFoundPage,
-    renderExplorableIndicatorsJson
-} from "./siteBaking"
+    EntriesByYearPage,
+    EntriesForYearPage
+} from "./views/EntriesByYearPage"
+import { VariableCountryPage } from "./views/VariableCountryPage"
+import { FeedbackPage } from "./views/FeedbackPage"
+
+import { JsonError } from "utils/server/serverUtil"
+import { isExplorable, FORCE_EXPLORABLE_CHART_IDS } from "utils/charts"
+import { Indicator } from "charts/Indicator"
+
 import {
     bakeGrapherUrls,
     getGrapherExportsByUrl,
@@ -35,29 +41,43 @@ import {
 } from "./grapherUtil"
 import { makeSitemap } from "./sitemap"
 
-import * as React from "react"
 import { embedSnippet } from "./embedCharts"
 import { ChartConfigProps } from "charts/ChartConfig"
-import { getVariableData } from "db/model/Variable"
-import { bakeImageExports } from "./svgPngExport"
 import { Post } from "db/model/Post"
 import { bakeCountries } from "./countryProfiles"
-import { chartPage } from "./chartBaking"
-
-// Static site generator using Wordpress
-
-export interface SiteBakerProps {
-    forceUpdate?: boolean
-}
+import { ChartBaker } from "./ChartBaker"
 
 export class SiteBaker {
-    props: SiteBakerProps
-    grapherExports!: GrapherExports
-    constructor(props: SiteBakerProps) {
-        this.props = props
+    private grapherExports!: GrapherExports
+    private get baseDir() {
+        return this.serverSettings.BASE_DIR
+    }
+    private get bakedSiteDirectory() {
+        return this.serverSettings.BAKED_SITE_DIR
     }
 
-    async bakeRedirects() {
+    private get bakedSiteUrl() {
+        return this.clientSettings.BAKED_BASE_URL
+    }
+    private get bakedGrapherUrl() {
+        return this.clientSettings.BAKED_GRAPHER_URL
+    }
+
+    private clientSettings: ClientSettings
+    private serverSettings: ServerSettings
+    constructor(
+        clientSettings: ClientSettings,
+        serverSettings: ServerSettings
+    ) {
+        this.clientSettings = clientSettings
+        this.serverSettings = serverSettings
+    }
+
+    stage(outPath: string, msg?: string) {
+        console.log(msg || outPath)
+    }
+
+    private async bakeRedirects() {
         const redirects = [
             // RSS feed
             "/feed /atom.xml 302",
@@ -98,7 +118,7 @@ export class SiteBaker {
         ]
 
         // Redirects from Wordpress admin UI
-        const rows = await wpdb.query(
+        const rows = await wpdb.dbInstance.query(
             `SELECT url, action_data, action_code FROM wp_redirection_items WHERE status = 'enabled'`
         )
         redirects.push(
@@ -135,14 +155,14 @@ export class SiteBaker {
         }
 
         await this.stageWrite(
-            path.join(BAKED_SITE_DIR, `_redirects`),
+            path.join(this.bakedSiteDirectory, `_redirects`),
             redirects.join("\n")
         )
     }
 
-    async bakeEmbeds() {
+    private async bakeEmbeds() {
         // Find all grapher urls used as embeds in all posts on the site
-        const rows = await wpdb.query(
+        const rows = await wpdb.dbInstance.query(
             `SELECT post_content FROM wp_posts WHERE (post_type='page' OR post_type='post' OR post_type='wp_block') AND post_status='publish'`
         )
         let grapherUrls = []
@@ -157,20 +177,31 @@ export class SiteBaker {
                     .map(el => el.attribs["src"])
             )
         }
-        grapherUrls = _.uniq(grapherUrls)
+        grapherUrls = lodash.uniq(grapherUrls)
 
-        await bakeGrapherUrls(grapherUrls)
+        await bakeGrapherUrls(
+            grapherUrls,
+            this.serverSettings,
+            this.clientSettings
+        )
 
-        this.grapherExports = await getGrapherExportsByUrl()
+        this.grapherExports = await getGrapherExportsByUrl(
+            this.serverSettings,
+            this.clientSettings
+        )
     }
 
     // Bake an individual post/page
-    async bakePost(post: wpdb.FullPost) {
-        const entries = await wpdb.getEntriesByCategory()
+    private async bakePost(post: wpdb.FullPost) {
+        const entries = await wpdb.dbInstance.getEntriesByCategory(
+            this.clientSettings
+        )
         const formattingOptions = extractFormattingOptions(post.content)
         const formatted = await formatPost(
             post,
             formattingOptions,
+            this.clientSettings,
+            this.serverSettings,
             this.grapherExports
         )
         const html = renderToHtmlPage(
@@ -178,25 +209,30 @@ export class SiteBaker {
                 entries={entries}
                 post={formatted}
                 formattingOptions={formattingOptions}
+                clientSettings={this.clientSettings}
             />
         )
 
-        const outPath = path.join(BAKED_SITE_DIR, `${post.slug}.html`)
+        const outPath = path.join(this.bakedSiteDirectory, `${post.slug}.html`)
         await fs.mkdirp(path.dirname(outPath))
         await this.stageWrite(outPath, html)
     }
 
     // Bake all Wordpress posts, both blog posts and entry pages
-    async bakePosts() {
-        const postsApi = await wpdb.getPosts()
+    private async bakePosts() {
+        const postsApi = await wpdb.dbInstance.getPosts(this.clientSettings)
 
         const postSlugs = []
         for (const postApi of postsApi) {
-            const post = wpdb.getFullPost(postApi)
+            const post = wpdb.dbInstance.getFullPost(
+                postApi,
+                this.clientSettings.BAKED_BASE_URL
+            )
             // blog: handled separately
             // isPostEmbedded: post displayed in the entry only (not on its own
             // page), skipping.
-            if (post.slug === "blog" || wpdb.isPostEmbedded(post)) continue
+            if (post.slug === "blog" || wpdb.dbInstance.isPostEmbedded(post))
+                continue
 
             postSlugs.push(post.slug)
             await this.bakePost(post)
@@ -207,9 +243,11 @@ export class SiteBaker {
 
         // Delete any previously rendered posts that aren't in the database
         const existingSlugs = glob
-            .sync(`${BAKED_SITE_DIR}/**/*.html`)
+            .sync(`${this.bakedSiteDirectory}/**/*.html`)
             .map(path =>
-                path.replace(`${BAKED_SITE_DIR}/`, "").replace(".html", "")
+                path
+                    .replace(`${this.bakedSiteDirectory}/`, "")
+                    .replace(".html", "")
             )
             .filter(
                 path =>
@@ -230,69 +268,69 @@ export class SiteBaker {
                     path !== "404" &&
                     path !== "google8272294305985984"
             )
-        const toRemove = without(existingSlugs, ...postSlugs)
+        const toRemove = lodash.without(existingSlugs, ...postSlugs)
         for (const slug of toRemove) {
-            const outPath = `${BAKED_SITE_DIR}/${slug}.html`
+            const outPath = `${this.bakedSiteDirectory}/${slug}.html`
             await fs.unlink(outPath)
             this.stage(outPath, `DELETING ${outPath}`)
         }
     }
 
     // Bake unique individual pages
-    async bakeSpecialPages() {
+    private async bakeSpecialPages(bakeExplorerPage: boolean) {
         await this.stageWrite(
-            `${BAKED_SITE_DIR}/index.html`,
-            await renderFrontPage()
+            `${this.bakedSiteDirectory}/index.html`,
+            await renderFrontPage(this.clientSettings)
         )
         await this.stageWrite(
-            `${BAKED_SITE_DIR}/subscribe.html`,
-            await renderSubscribePage()
+            `${this.bakedSiteDirectory}/subscribe.html`,
+            await renderSubscribePage(this.clientSettings)
         )
         await this.stageWrite(
-            `${BAKED_SITE_DIR}/donate.html`,
-            await renderDonatePage()
+            `${this.bakedSiteDirectory}/donate.html`,
+            await renderDonatePage(this.clientSettings)
         )
         await this.stageWrite(
-            `${BAKED_SITE_DIR}/feedback.html`,
-            await feedbackPage()
+            `${this.bakedSiteDirectory}/feedback.html`,
+            await feedbackPage(this.clientSettings)
         )
         await this.stageWrite(
-            `${BAKED_SITE_DIR}/charts.html`,
-            await renderChartsPage()
+            `${this.bakedSiteDirectory}/charts.html`,
+            await renderChartsPage(this.clientSettings)
         )
         await this.stageWrite(
-            `${BAKED_SITE_DIR}/search.html`,
-            await renderSearchPage()
+            `${this.bakedSiteDirectory}/search.html`,
+            await renderSearchPage(this.clientSettings)
         )
         await this.stageWrite(
-            `${BAKED_SITE_DIR}/404.html`,
-            await renderNotFoundPage()
+            `${this.bakedSiteDirectory}/404.html`,
+            await renderNotFoundPage(this.clientSettings)
         )
         await this.stageWrite(
-            `${BAKED_SITE_DIR}/headerMenu.json`,
-            await renderMenuJson()
+            `${this.bakedSiteDirectory}/headerMenu.json`,
+            await renderMenuJson(this.clientSettings)
         )
         await this.stageWrite(
-            `${BAKED_SITE_DIR}/sitemap.xml`,
+            `${this.bakedSiteDirectory}/sitemap.xml`,
             await makeSitemap()
         )
-        if (settings.EXPLORER) {
+        if (bakeExplorerPage) {
             await this.stageWrite(
-                `${BAKED_SITE_DIR}/explore.html`,
-                await renderExplorePage()
+                `${this.bakedSiteDirectory}/explore.html`,
+                await renderExplorePage(this.clientSettings)
             )
             await this.stageWrite(
-                `${BAKED_SITE_DIR}/explore/indicators.json`,
+                `${this.bakedSiteDirectory}/explore/indicators.json`,
                 await renderExplorableIndicatorsJson()
             )
         }
     }
 
     // Pages that are expected by google scholar for indexing
-    async bakeGoogleScholar() {
+    private async bakeGoogleScholar() {
         await this.stageWrite(
-            `${BAKED_SITE_DIR}/entries-by-year/index.html`,
-            await entriesByYearPage()
+            `${this.bakedSiteDirectory}/entries-by-year/index.html`,
+            await entriesByYearPage(this.clientSettings)
         )
 
         const rows = (await db
@@ -308,248 +346,555 @@ export class SiteBaker {
 
         for (const year of years) {
             await this.stageWrite(
-                `${BAKED_SITE_DIR}/entries-by-year/${year}.html`,
-                await entriesByYearPage(year)
+                `${this.bakedSiteDirectory}/entries-by-year/${year}.html`,
+                await entriesByYearPage(this.clientSettings, year)
             )
         }
     }
 
     // Bake the blog index
-    async bakeBlogIndex() {
-        const allPosts = await wpdb.getBlogIndex()
-        const numPages = Math.ceil(allPosts.length / BLOG_POSTS_PER_PAGE)
+    private async bakeBlogIndex(blogPostsPerPage: number) {
+        const allPosts = await wpdb.dbInstance.getBlogIndex(this.clientSettings)
+        const numPages = Math.ceil(allPosts.length / blogPostsPerPage)
 
         for (let i = 1; i <= numPages; i++) {
             const slug = i === 1 ? "blog" : `blog/page/${i}`
-            const html = await renderBlogByPageNum(i)
-            await this.stageWrite(`${BAKED_SITE_DIR}/${slug}.html`, html)
+            const html = await renderBlogByPageNum(
+                i,
+                blogPostsPerPage,
+                this.clientSettings
+            )
+            await this.stageWrite(
+                `${this.bakedSiteDirectory}/${slug}.html`,
+                html
+            )
         }
     }
 
     // Bake the RSS feed
-    async bakeRSS() {
+    private async bakeRSS() {
         await this.stageWrite(
-            `${BAKED_SITE_DIR}/atom.xml`,
-            await makeAtomFeed()
+            `${this.bakedSiteDirectory}/atom.xml`,
+            await makeAtomFeed(this.clientSettings)
         )
     }
 
     // Bake the static assets
-    async bakeAssets() {
+    private async bakeAssets(wordPressDirectory: string) {
         shell.exec(
-            `rsync -havL --delete ${WORDPRESS_DIR}/web/app/uploads ${BAKED_SITE_DIR}/`
+            `rsync -havL --delete ${wordPressDirectory}/web/app/uploads ${this.bakedSiteDirectory}/`
         )
         shell.exec(
-            `rm -rf ${BAKED_SITE_DIR}/assets && cp -r ${BASE_DIR}/dist/webpack ${BAKED_SITE_DIR}/assets`
+            `rm -rf ${this.bakedSiteDirectory}/assets && cp -r ${this.baseDir}/dist/webpack ${this.bakedSiteDirectory}/assets`
         )
         shell.exec(
-            `rsync -hav --delete ${BASE_DIR}/public/* ${BAKED_SITE_DIR}/`
+            `rsync -hav --delete ${this.baseDir}/public/* ${this.bakedSiteDirectory}/`
         )
 
         await fs.writeFile(
-            `${BAKED_SITE_DIR}/grapher/embedCharts.js`,
-            embedSnippet()
+            `${this.bakedSiteDirectory}/grapher/embedCharts.js`,
+            embedSnippet(this.clientSettings)
         )
-        this.stage(`${BAKED_SITE_DIR}/grapher/embedCharts.js`)
+        this.stage(`${this.bakedSiteDirectory}/grapher/embedCharts.js`)
     }
 
-    async bakeVariableData(
-        variableIds: number[],
-        outPath: string
-    ): Promise<string> {
-        await fs.mkdirp(`${BAKED_SITE_DIR}/grapher/data/variables/`)
-        const vardata = await getVariableData(variableIds)
-        await fs.writeFile(outPath, JSON.stringify(vardata))
-        this.stage(outPath)
-        return vardata
-    }
-
-    async bakeChartPage(chart: ChartConfigProps) {
-        const outPath = `${BAKED_SITE_DIR}/grapher/${chart.slug}.html`
-        await fs.writeFile(outPath, await chartPage(chart.slug as string))
-        this.stage(outPath)
-    }
-
-    async bakeChart(chart: ChartConfigProps) {
-        const htmlPath = `${BAKED_SITE_DIR}/grapher/${chart.slug}.html`
-        let isSameVersion = false
-        try {
-            // If the chart is the same version, we can potentially skip baking the data and exports (which is by far the slowest part)
-            const html = await fs.readFile(htmlPath, "utf8")
-            const match = html.match(/jsonConfig\s*=\s*(\{.+\})/)
-            if (match) {
-                const fileVersion = JSON.parse(match[1]).version
-                isSameVersion = chart.version === fileVersion
-            }
-        } catch (err) {
-            if (err.code !== "ENOENT") console.error(err)
-        }
-
-        const variableIds = _.uniq(chart.dimensions.map(d => d.variableId))
-        if (!variableIds.length) return
-
-        // Make sure we bake the variables successfully before outputing the chart html
-        const vardataPath = `${BAKED_SITE_DIR}/grapher/data/variables/${variableIds.join(
-            "+"
-        )}.json`
-        if (!isSameVersion || !fs.existsSync(vardataPath)) {
-            await this.bakeVariableData(variableIds, vardataPath)
-        }
-
-        // Always bake the html for every chart; it's cheap to do so
-        await this.bakeChartPage(chart)
-
-        try {
-            await fs.mkdirp(`${BAKED_SITE_DIR}/grapher/exports/`)
-            const svgPath = `${BAKED_SITE_DIR}/grapher/exports/${chart.slug}.svg`
-            const pngPath = `${BAKED_SITE_DIR}/grapher/exports/${chart.slug}.png`
-            if (
-                !isSameVersion ||
-                !fs.existsSync(svgPath) ||
-                !fs.existsSync(pngPath)
-            ) {
-                const vardata = JSON.parse(
-                    await fs.readFile(vardataPath, "utf8")
-                )
-                await bakeImageExports(
-                    `${BAKED_SITE_DIR}/grapher/exports`,
-                    chart,
-                    vardata
-                )
-                this.stage(svgPath)
-                this.stage(pngPath)
-            }
-        } catch (err) {
-            console.error(err)
-        }
-    }
-
-    async bakeCharts(
-        opts: {
-            regenConfig?: boolean
-            regenData?: boolean
-            regenImages?: boolean
-        } = {}
-    ) {
-        const rows = await db.query(
+    private async getAllCharts() {
+        const rows: any[] = await db.query(
             `SELECT id, config FROM charts WHERE JSON_EXTRACT(config, "$.isPublished")=true ORDER BY JSON_EXTRACT(config, "$.slug") ASC`
         )
-
-        const newSlugs = []
-        let requests = []
-        for (const row of rows) {
+        return rows.map(row => {
             const chart: ChartConfigProps = JSON.parse(row.config)
             chart.id = row.id
-            newSlugs.push(chart.slug)
+            return chart
+        })
+    }
 
-            requests.push(this.bakeChart(chart))
+    async bakeChartBySlug(outputFolder: string, slug: string) {
+        const charts = await this.getAllCharts()
+        const chart = charts.filter(chart => chart.slug === slug)[0]
+        if (!chart) throw new Error(`No chart with slug '${slug}'`)
+        const baker = new ChartBaker(chart, outputFolder, this.clientSettings)
+        await baker.bakeAll()
+    }
+
+    async bakeChartsToFolder(outputFolder: string) {
+        let requests = []
+        const charts = await this.getAllCharts()
+        const batchSize = 1
+        let currentIndex = 0
+        for (const chart of charts) {
+            console.log(
+                `Baking chart ${currentIndex}/${charts.length} '${chart.slug}'`
+            )
+            currentIndex++
+            requests.push(
+                new ChartBaker(
+                    chart,
+                    outputFolder,
+                    this.clientSettings
+                ).bakeAll()
+            )
             // Execute in batches
-            if (requests.length > 50) {
+            if (requests.length > batchSize) {
                 await Promise.all(requests)
                 requests = []
-            }
-        }
-
-        // Delete any that are missing from the database
-        const oldSlugs = glob
-            .sync(`${BAKED_SITE_DIR}/grapher/*.html`)
-            .map(slug =>
-                slug
-                    .replace(`${BAKED_SITE_DIR}/grapher/`, "")
-                    .replace(".html", "")
-            )
-        const toRemove = without(oldSlugs, ...newSlugs)
-        for (const slug of toRemove) {
-            console.log(`DELETING ${slug}`)
-            try {
-                const paths = [
-                    `${BAKED_SITE_DIR}/grapher/${slug}.html`,
-                    `${BAKED_SITE_DIR}/grapher/exports/${slug}.png`
-                ] //, `${BAKED_SITE_DIR}/grapher/exports/${slug}.svg`]
-                await Promise.all(paths.map(p => fs.unlink(p)))
-                paths.map(p => this.stage(p))
-            } catch (err) {
-                console.error(err)
             }
         }
 
         return Promise.all(requests)
     }
 
+    private async _removeDeletedCharts() {
+        const charts = await this.getAllCharts()
+        const newSlugs = charts.map(chart => chart.slug)
+        // Delete any that are missing from the database
+        const oldSlugs = glob
+            .sync(`${this.bakedSiteDirectory}/grapher/*.html`)
+            .map(slug =>
+                slug
+                    .replace(`${this.bakedSiteDirectory}/grapher/`, "")
+                    .replace(".html", "")
+            )
+        const toRemove = lodash.without(oldSlugs, ...newSlugs)
+        for (const slug of toRemove) {
+            console.log(`DELETING ${slug}`)
+            try {
+                const paths = [
+                    `${this.bakedSiteDirectory}/grapher/${slug}.html`,
+                    `${this.bakedSiteDirectory}/grapher/exports/${slug}.png`
+                ] //, `${this.bakedSiteDirectory}/grapher/exports/${slug}.svg`]
+                await Promise.all(paths.map(p => fs.unlink(p)))
+                paths.map(p => this.stage(p))
+            } catch (err) {
+                console.error(err)
+            }
+        }
+    }
+
     async bakeAll() {
         this.flushCache()
         await this.bakeRedirects()
         await this.bakeEmbeds()
-        await this.bakeBlogIndex()
+        await this.bakeBlogIndex(this.clientSettings.BLOG_POSTS_PER_PAGE)
         await bakeCountries(this)
         await this.bakeRSS()
-        await this.bakeAssets()
-        await this.bakeSpecialPages()
+        await this.bakeAssets(this.serverSettings.WORDPRESS_DIR)
+        await this.bakeSpecialPages(this.clientSettings.EXPLORER)
         await this.bakeGoogleScholar()
         await this.bakePosts()
-        await this.bakeCharts()
+        await this.bakeChartsToFolder(`${this.bakedSiteDirectory}/`)
+        await this._removeDeletedCharts()
     }
 
     async ensureDir(relPath: string) {
-        const outPath = path.join(BAKED_SITE_DIR, relPath)
+        const outPath = path.join(this.bakedSiteDirectory, relPath)
         await fs.mkdirp(outPath)
     }
 
     async writeFile(relPath: string, content: string) {
-        const outPath = path.join(BAKED_SITE_DIR, relPath)
+        const outPath = path.join(this.bakedSiteDirectory, relPath)
         await fs.writeFile(outPath, content)
         this.stage(outPath)
     }
 
-    async stageWrite(outPath: string, content: string) {
+    private async stageWrite(outPath: string, content: string) {
         await fs.mkdirp(path.dirname(outPath))
         await fs.writeFile(outPath, content)
         this.stage(outPath)
     }
 
-    stage(outPath: string, msg?: string) {
-        console.log(msg || outPath)
-    }
-
-    exec(cmd: string) {
+    private exec(cmd: string) {
         console.log(cmd)
         shell.exec(cmd)
     }
 
     async deploy(commitMsg: string, authorEmail?: string, authorName?: string) {
         // Deploy directly to Netlify (faster than using the github hook)
-        if (fs.existsSync(path.join(BAKED_SITE_DIR, ".netlify/state.json"))) {
+        if (
+            fs.existsSync(
+                path.join(this.bakedSiteDirectory, ".netlify/state.json")
+            )
+        ) {
             this.exec(
-                `cd ${BAKED_SITE_DIR} && ${BASE_DIR}/node_modules/.bin/netlify deploy -d . --prod`
+                `cd ${this.bakedSiteDirectory} && ${this.baseDir}/node_modules/.bin/netlify deploy -d . --prod`
             )
         }
 
         // Ensure there is a git repo in there
-        this.exec(`cd ${BAKED_SITE_DIR} && git init`)
+        this.exec(`cd ${this.bakedSiteDirectory} && git init`)
 
         // Prettify HTML source for easier debugging
         // Target root level HTML files only (entries and posts) for performance
         // reasons.
         // TODO: check again --only-changed
-        // this.exec(`cd ${BAKED_SITE_DIR} && ${BASE_DIR}/node_modules/.bin/prettier --write "./*.html"`)
+        // this.exec(`cd ${this.bakedSiteDirectory} && ${this.baseDir}/node_modules/.bin/prettier --write "./*.html"`)
 
         if (authorEmail && authorName && commitMsg) {
             this.exec(
-                `cd ${BAKED_SITE_DIR} && git add -A . && git commit --author='${authorName} <${authorEmail}>' -a -m '${commitMsg}' && git push origin master`
+                `cd ${this.bakedSiteDirectory} && git add -A . && git commit --author='${authorName} <${authorEmail}>' -a -m '${commitMsg}' && git push origin master`
             )
         } else {
             this.exec(
-                `cd ${BAKED_SITE_DIR} && git add -A . && git commit -a -m '${commitMsg}' && git push origin master`
+                `cd ${this.bakedSiteDirectory} && git add -A . && git commit -a -m '${commitMsg}' && git push origin master`
             )
         }
     }
 
     end() {
-        wpdb.end()
+        wpdb.dbInstance.end()
         db.end()
     }
 
-    flushCache() {
-        wpdb.flushCache()
+    private flushCache() {
+        wpdb.dbInstance.flushCache()
     }
+}
+
+// Wrap ReactDOMServer to stick the doctype on
+export function renderToHtmlPage(element: any) {
+    return `<!doctype html>${ReactDOMServer.renderToStaticMarkup(element)}`
+}
+
+export async function renderChartsPage(clientSettings: ClientSettings) {
+    const chartItems = (await db.query(`
+        SELECT
+            id,
+            config->>"$.slug" AS slug,
+            config->>"$.title" AS title,
+            config->>"$.variantName" AS variantName
+        FROM charts
+        WHERE
+            is_indexable IS TRUE
+            AND publishedAt IS NOT NULL
+            AND config->"$.isPublished" IS TRUE
+    `)) as ChartIndexItem[]
+
+    const chartTags = await db.query(`
+        SELECT ct.chartId, ct.tagId, t.name as tagName, t.parentId as tagParentId FROM chart_tags ct
+        JOIN charts c ON c.id=ct.chartId
+        JOIN tags t ON t.id=ct.tagId
+    `)
+
+    for (const c of chartItems) {
+        c.tags = []
+    }
+
+    const chartsById = lodash.keyBy(chartItems, c => c.id)
+
+    for (const ct of chartTags) {
+        const c = chartsById[ct.chartId]
+        if (c) c.tags.push({ id: ct.tagId, name: ct.tagName })
+    }
+
+    return renderToHtmlPage(
+        <ChartsIndexPage
+            chartItems={chartItems}
+            clientSettings={clientSettings}
+        />
+    )
+}
+
+export async function renderExplorePage(clientSettings: ClientSettings) {
+    return renderToHtmlPage(<ExplorePage clientSettings={clientSettings} />)
+}
+
+// Only used in the dev server
+export async function renderCovidPage(clientSettings: ClientSettings) {
+    return renderToHtmlPage(<CovidPage clientSettings={clientSettings} />)
+}
+
+export async function renderExplorableIndicatorsJson() {
+    const query: { id: number; config: any }[] = await db.query(
+        `
+        SELECT id, config
+        FROM charts
+        WHERE charts.isExplorable
+        ${FORCE_EXPLORABLE_CHART_IDS.length ? `OR charts.id IN (?)` : ""}
+        `,
+        [FORCE_EXPLORABLE_CHART_IDS]
+    )
+
+    const explorableCharts = query
+        .map(chart => ({
+            id: chart.id,
+            config: JSON.parse(chart.config) as ChartConfigProps
+        }))
+        // Ensure config is consistent with the current "explorable" requirements
+        .filter(chart => isExplorable(chart.config))
+
+    const result: Indicator[] = explorableCharts.map(chart => ({
+        id: chart.id,
+        title: chart.config.title,
+        subtitle: chart.config.subtitle,
+        sourceDesc: chart.config.sourceDesc,
+        note: chart.config.note,
+        dimensions: chart.config.dimensions,
+        map: chart.config.map
+    }))
+
+    return JSON.stringify({ indicators: result })
+}
+
+export async function renderPageBySlug(
+    slug: string,
+    serverSettings: ServerSettings,
+    clientSettings: ClientSettings
+) {
+    const postApiArray = await wpdb.dbInstance.getPostBySlug(
+        slug,
+        clientSettings
+    )
+    if (!postApiArray.length)
+        throw new JsonError(`No page found by slug ${slug}`, 404)
+
+    return renderPage(postApiArray[0], serverSettings, clientSettings)
+}
+
+export async function renderPageById(
+    id: number,
+    clientSettings: ClientSettings,
+    serverSettings: ServerSettings,
+    isPreview?: boolean
+): Promise<string> {
+    let postApi = await wpdb.dbInstance.getPost(id, clientSettings)
+    if (isPreview) {
+        const revision = await wpdb.dbInstance.getLatestPostRevision(
+            id,
+            clientSettings
+        )
+        postApi = {
+            ...revision,
+            authors_name: postApi.authors_name,
+            type: postApi.type,
+            path: postApi.path,
+            postId: id
+        }
+    }
+    return renderPage(postApi, serverSettings, clientSettings)
+}
+
+export async function renderMenuJson(clientSettings: ClientSettings) {
+    const categories = await wpdb.dbInstance.getEntriesByCategory(
+        clientSettings
+    )
+    return JSON.stringify({ categories: categories })
+}
+
+async function renderPage(
+    postApi: object,
+    serverSettings: ServerSettings,
+    clientSettings: ClientSettings
+) {
+    const post = wpdb.dbInstance.getFullPost(
+        postApi,
+        clientSettings.BAKED_BASE_URL
+    )
+    const entries = await wpdb.dbInstance.getEntriesByCategory(clientSettings)
+
+    const cheerioPage = cheerio.load(post.content)
+
+    const grapherUrls = cheerioPage("iframe")
+        .toArray()
+        .filter(el => (el.attribs["src"] || "").match(/\/grapher\//))
+        .map(el => el.attribs["src"])
+
+    // This can be slow if uncached!
+    await bakeGrapherUrls(grapherUrls, serverSettings, clientSettings)
+
+    const exportsByUrl = await getGrapherExportsByUrl(
+        serverSettings,
+        clientSettings
+    )
+
+    // Extract formatting options from post HTML comment (if any)
+    const formattingOptions = extractFormattingOptions(post.content)
+    const formatted = await formatPost(
+        post,
+        formattingOptions,
+        clientSettings,
+        serverSettings,
+        exportsByUrl
+    )
+
+    return renderToHtmlPage(
+        <LongFormPage
+            entries={entries}
+            post={formatted}
+            formattingOptions={formattingOptions}
+            clientSettings={clientSettings}
+        />
+    )
+}
+
+export async function renderFrontPage(clientSettings: ClientSettings) {
+    const entries = await wpdb.dbInstance.getEntriesByCategory(clientSettings)
+    const posts = await wpdb.dbInstance.getBlogIndex(clientSettings)
+    const totalCharts = (
+        await db.query(`SELECT COUNT(*) as count FROM charts`)
+    )[0].count as number
+    return renderToHtmlPage(
+        <FrontPage
+            entries={entries}
+            posts={posts}
+            totalCharts={totalCharts}
+            clientSettings={clientSettings}
+        />
+    )
+}
+export async function renderDonatePage(clientSettings: ClientSettings) {
+    return renderToHtmlPage(<DonatePage clientSettings={clientSettings} />)
+}
+
+export async function renderSubscribePage(clientSettings: ClientSettings) {
+    return renderToHtmlPage(<SubscribePage clientSettings={clientSettings} />)
+}
+
+export async function renderBlogByPageNum(
+    pageNum: number,
+    blogPostsPerPage: number,
+    clientSettings: ClientSettings
+) {
+    const allPosts = await wpdb.dbInstance.getBlogIndex(clientSettings)
+
+    const numPages = Math.ceil(allPosts.length / blogPostsPerPage)
+    const posts = allPosts.slice(
+        (pageNum - 1) * blogPostsPerPage,
+        pageNum * blogPostsPerPage
+    )
+
+    return renderToHtmlPage(
+        <BlogIndexPage
+            posts={posts}
+            pageNum={pageNum}
+            numPages={numPages}
+            clientSettings={clientSettings}
+        />
+    )
+}
+
+export async function renderSearchPage(clientSettings: ClientSettings) {
+    return renderToHtmlPage(<SearchPage clientSettings={clientSettings} />)
+}
+
+export async function renderNotFoundPage(clientSettings: ClientSettings) {
+    return renderToHtmlPage(<NotFoundPage clientSettings={clientSettings} />)
+}
+
+export async function makeAtomFeed(clientSettings: ClientSettings) {
+    const bakedBaseUrl = clientSettings.BAKED_BASE_URL
+    const postsApi = await wpdb.dbInstance.getPosts(
+        clientSettings,
+        ["post"],
+        10
+    )
+    const posts: wpdb.FullPost[] = postsApi.map(postApi =>
+        wpdb.dbInstance.getFullPost(postApi, bakedBaseUrl, true)
+    )
+
+    const feed = `<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<title>Our World in Data</title>
+<subtitle>Research and data to make progress against the world’s largest problems</subtitle>
+<id>${bakedBaseUrl}/</id>
+<link type="text/html" rel="alternate" href="${bakedBaseUrl}"/>
+<link type="application/atom+xml" rel="self" href="${bakedBaseUrl}/atom.xml"/>
+<updated>${posts[0].date.toISOString()}</updated>
+${posts
+    .map(
+        post => `<entry>
+    <title><![CDATA[${post.title}]]></title>
+    <id>${bakedBaseUrl}/${post.path}</id>
+    <link rel="alternate" href="${bakedBaseUrl}/${post.path}"/>
+    <published>${post.date.toISOString()}</published>
+    <updated>${post.modifiedDate.toISOString()}</updated>
+    ${post.authors
+        .map((author: string) => `<author><name>${author}</name></author>`)
+        .join("")}
+    <summary><![CDATA[${post.excerpt}]]></summary>
+</entry>`
+    )
+    .join("\n")}
+</feed>
+`
+
+    return feed
+}
+
+// These pages exist largely just for Google Scholar
+export async function entriesByYearPage(
+    clientSettings: ClientSettings,
+    year?: number
+) {
+    const entries = (await db
+        .table(Post.table)
+        .where({ status: "publish" })
+        .join("post_tags", { "post_tags.post_id": "posts.id" })
+        .join("tags", { "tags.id": "post_tags.tag_id" })
+        .where({ "tags.name": "Entries" })
+        .select("title", "slug", "published_at")) as Pick<
+        Post.Row,
+        "title" | "slug" | "published_at"
+    >[]
+
+    if (year !== undefined)
+        return renderToHtmlPage(
+            <EntriesForYearPage
+                entries={entries}
+                year={year}
+                clientSettings={clientSettings}
+            />
+        )
+    else
+        return renderToHtmlPage(
+            <EntriesByYearPage
+                entries={entries}
+                clientSettings={clientSettings}
+            />
+        )
+}
+
+export async function pagePerVariable(
+    variableId: number,
+    countryName: string,
+    clientSettings: ClientSettings
+) {
+    const variable = await db.get(
+        `
+        SELECT v.id, v.name, v.unit, v.shortUnit, v.description, v.sourceId, u.fullName AS uploadedBy,
+               v.display, d.id AS datasetId, d.name AS datasetName, d.namespace AS datasetNamespace
+        FROM variables v
+        JOIN datasets d ON d.id=v.datasetId
+        JOIN users u ON u.id=d.dataEditedByUserId
+        WHERE v.id = ?
+    `,
+        [variableId]
+    )
+
+    if (!variable) {
+        throw new JsonError(`No variable by id '${variableId}'`, 404)
+    }
+
+    variable.display = JSON.parse(variable.display)
+    variable.source = await db.get(
+        `SELECT id, name FROM sources AS s WHERE id = ?`,
+        variable.sourceId
+    )
+
+    const country = await db
+        .table("entities")
+        .select("id", "name")
+        .whereRaw("lower(name) = ?", [countryName])
+        .first()
+
+    return renderToHtmlPage(
+        <VariableCountryPage
+            variable={variable}
+            country={country}
+            clientSettings={clientSettings}
+        />
+    )
+}
+
+export async function feedbackPage(clientSettings: ClientSettings) {
+    return renderToHtmlPage(<FeedbackPage clientSettings={clientSettings} />)
 }

@@ -1,4 +1,4 @@
-import * as settings from "settings"
+import { ClientSettings } from "clientSettings"
 import * as React from "react"
 import { Head } from "./Head"
 import { SiteHeader } from "./SiteHeader"
@@ -10,13 +10,17 @@ export interface Country {
     code: string
 }
 
-export const CountriesIndexPage = (props: { countries: Country[] }) => {
-    const { countries } = props
+export const CountriesIndexPage = (props: {
+    countries: Country[]
+    clientSettings: ClientSettings
+}) => {
+    const { countries, clientSettings } = props
 
     return (
         <html>
             <Head
-                canonicalUrl={`${settings.BAKED_BASE_URL}/countries`}
+                clientSettings={clientSettings}
+                canonicalUrl={`${clientSettings.BAKED_BASE_URL}/countries`}
                 pageTitle="Countries"
                 pageDesc="Data by individual country on Our World in Data."
             />
@@ -38,7 +42,7 @@ export const CountriesIndexPage = (props: { countries: Country[] }) => {
                         ))}
                     </ul>
                 </main>
-                <SiteFooter />
+                <SiteFooter clientSettings={clientSettings} />
                 {/* <script>{`window.runChartsIndexPage()`}</script> */}
             </body>
         </html>

@@ -6,9 +6,9 @@ import { Bounds } from "./Bounds"
 import { ChartConfig } from "./ChartConfig"
 import { SourceWithDimension } from "./ChartData"
 import * as Cookies from "js-cookie"
-import { ADMIN_BASE_URL } from "settings"
 import { faPencilAlt } from "@fortawesome/free-solid-svg-icons/faPencilAlt"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { ClientSettings } from "clientSettings"
 
 const linkifyHtml = require("linkifyjs/html")
 function linkify(s: string) {
@@ -30,9 +30,11 @@ export class SourcesTab extends React.Component<{
     renderSource(source: SourceWithDimension) {
         const { dimension } = source
         const { variable } = dimension
+        // todo: cleanup
+        const clientSettings = new ClientSettings()
 
         const editUrl = Cookies.get("isAdmin")
-            ? `${ADMIN_BASE_URL}/admin/datasets/${variable.datasetId}`
+            ? `${clientSettings.ADMIN_BASE_URL}/admin/datasets/${variable.datasetId}`
             : undefined
 
         const minYear = min(variable.years)

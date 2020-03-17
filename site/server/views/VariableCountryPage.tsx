@@ -1,4 +1,4 @@
-import * as settings from "settings"
+import { ClientSettings } from "clientSettings"
 import * as React from "react"
 import { Head } from "./Head"
 import { SiteHeader } from "./SiteHeader"
@@ -25,12 +25,11 @@ export interface VariableCountryPageProps {
 
         source: { id: number; name: string }
     }
+    clientSettings: ClientSettings
 }
 
 export const VariableCountryPage = (props: VariableCountryPageProps) => {
-    const { variable, country } = props
-
-    const displayName = defaultTo(variable.display.name, variable.name)
+    const { variable, country, clientSettings } = props
 
     const pageTitle = `${country.name} / ${variable.name}`
     const script = `window.runVariableCountryPage(${JSON.stringify(props)})`
@@ -38,14 +37,15 @@ export const VariableCountryPage = (props: VariableCountryPageProps) => {
     return (
         <html>
             <Head
-                canonicalUrl={`${settings.BAKED_BASE_URL}/search`}
+                clientSettings={clientSettings}
+                canonicalUrl={`${clientSettings.BAKED_BASE_URL}/search`}
                 pageTitle={pageTitle}
                 pageDesc="Search articles and charts on Our World in Data."
             />
             <body className="VariableCountryPage">
                 <SiteHeader />
                 <main>{variable.name}</main>
-                <SiteFooter />
+                <SiteFooter clientSettings={clientSettings} />
                 <script dangerouslySetInnerHTML={{ __html: script }} />
             </body>
         </html>

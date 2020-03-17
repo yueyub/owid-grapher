@@ -1,19 +1,16 @@
 import * as express from "express"
 import { Router } from "express"
-import * as _ from "lodash"
+import * as lodash from "lodash"
 import { getConnection } from "typeorm"
 import * as bodyParser from "body-parser"
 
+import urljoin = require("url-join")
+
 import * as db from "db/db"
 import * as wpdb from "db/wpdb"
-import { UNCATEGORIZED_TAG_ID, BAKE_ON_CHANGE } from "serverSettings"
-import {
-    JsonError,
-    expectInt,
-    isValidSlug,
-    absoluteUrl
-} from "utils/server/serverUtil"
-import { sendMail } from "admin/server/mail"
+import { ServerSettings } from "serverSettings"
+import { JsonError, expectInt, isValidSlug } from "utils/server/serverUtil"
+import { makeSender } from "admin/server/mail"
 import { OldChart, Chart } from "db/model/Chart"
 import { UserInvitation } from "db/model/UserInvitation"
 import { Request, Response, CurrentUser } from "./authentication"
@@ -31,7 +28,7 @@ import { Post } from "db/model/Post"
 import { camelCaseProperties } from "utils/object"
 import { log } from "utils/server/log"
 import { denormalizeLatestCountryData } from "site/server/countryProfiles"
-import { BAKED_BASE_URL } from "settings"
+import { ClientSettings } from "clientSettings"
 import { PostReference, ChartRedirect } from "admin/client/ChartEditor"
 import { enqueueDeploy } from "deploy/queue"
 import { isExplorable } from "utils/charts"
@@ -40,10 +37,14 @@ import { isExplorable } from "utils/charts"
 // the API code a bit cleaner
 class FunctionalRouter {
     router: Router
+    clientSettings: ClientSettings
+    serverSettings: ServerSettings
     constructor() {
         this.router = Router()
         // Parse incoming requests with JSON payloads http://expressjs.com/en/api.html
         this.router.use(express.json({ limit: "50mb" }))
+        this.clientSettings = new ClientSettings()
+        this.serverSettings = new ServerSettings()
     }
 
     wrap(callback: (req: Request, res: Response) => Promise<any>) {
@@ -87,18 +88,21 @@ const publicApi = new FunctionalRouter()
 
 // Call this to trigger build and deployment of static charts on change
 async function triggerStaticBuild(user: CurrentUser, commitMessage: string) {
-    if (!BAKE_ON_CHANGE) {
+    if (!api.serverSettings.BAKE_ON_CHANGE) {
         console.log(
             "Not triggering static build because BAKE_ON_CHANGE is false"
         )
         return
     }
 
-    enqueueDeploy({
-        authorName: user.fullName,
-        authorEmail: user.email,
-        message: commitMessage
-    })
+    enqueueDeploy(
+        {
+            authorName: user.fullName,
+            authorEmail: user.email,
+            message: commitMessage
+        },
+        api.serverSettings
+    )
 }
 
 async function getChartById(
@@ -131,7 +135,8 @@ async function getLogsByChartId(chartId: number): Promise<ChartRevision[]> {
 }
 
 async function getReferencesByChartId(
-    chartId: number
+    chartId: number,
+    bakedBaseUrl: string
 ): Promise<PostReference[]> {
     const rows = await db.query(
         `
@@ -161,7 +166,7 @@ async function getReferencesByChartId(
         // careful not to erroneously match those, which is why we switched to a
         // REGEXP.
         try {
-            posts = await wpdb.query(
+            posts = await wpdb.dbInstance.query(
                 `
                 SELECT ID, post_title, post_name
                 FROM wp_posts
@@ -177,20 +182,20 @@ async function getReferencesByChartId(
                             .join(" OR ")}
                     )
             `,
-                slugs.map(_.escapeRegExp)
+                slugs.map(lodash.escapeRegExp)
             )
         } catch (error) {
             console.error(error)
             // We can ignore errors due to not being able to connect.
         }
-        const permalinks = await wpdb.getPermalinks()
+        const permalinksFn = wpdb.dbInstance.getPermalinksFn()
         return posts.map(post => {
-            const slug = permalinks.get(post.ID, post.post_name)
+            const slug = permalinksFn(post.ID, post.post_name)
             return {
                 id: post.ID,
                 title: post.post_title,
                 slug: slug,
-                url: `${BAKED_BASE_URL}/${slug}`
+                url: `${bakedBaseUrl}/${slug}`
             }
         })
     } else {
@@ -223,9 +228,9 @@ async function expectChartById(chartId: any): Promise<ChartConfigProps> {
 }
 
 function omitSaveToVariable(config: ChartConfigProps): ChartConfigProps {
-    const newConfig = _.clone(config)
+    const newConfig = lodash.clone(config)
     newConfig.dimensions = newConfig.dimensions.map(dim => {
-        return _.omit(dim, ["saveToVariable"])
+        return lodash.omit(dim, ["saveToVariable"])
     })
     return newConfig
 }
@@ -436,7 +441,7 @@ api.get("/editorData/namespaces.json", async (req: Request, res: Response) => {
     )) as { name: string; description: string }[]
 
     return {
-        namespaces: _.sortBy(rows, row => row.description)
+        namespaces: lodash.sortBy(rows, row => row.description)
     }
 })
 
@@ -450,7 +455,10 @@ api.get("/charts/:chartId.logs.json", async (req: Request, res: Response) => {
 api.get(
     "/charts/:chartId.references.json",
     async (req: Request, res: Response) => {
-        const references = await getReferencesByChartId(req.params.chartId)
+        const references = await getReferencesByChartId(
+            req.params.chartId,
+            api.clientSettings.BAKED_BASE_URL
+        )
         return {
             references: references
         }
@@ -738,9 +746,15 @@ api.post("/users/invite", async (req: Request, res: Response) => {
         invite.updatedAt = new Date()
         await repo.save(invite)
 
-        const inviteLink = absoluteUrl(`/admin/register?code=${invite.code}`)
+        const inviteLink = urljoin(
+            api.clientSettings.ADMIN_BASE_URL,
+            `/admin/register?code=${invite.code}`
+        )
 
-        await sendMail({
+        // todo: cache?
+        const sender = makeSender(api.serverSettings)
+
+        await sender.sendMail({
             from: "no-reply@ourworldindata.org",
             to: email,
             subject: "Invitation to join owid-admin",
@@ -895,10 +909,10 @@ api.get("/datasets.json", async req => {
         SELECT dt.datasetId, t.id, t.name FROM dataset_tags dt
         JOIN tags t ON dt.tagId = t.id
     `)
-    const tagsByDatasetId = _.groupBy(tags, t => t.datasetId)
+    const tagsByDatasetId = lodash.groupBy(tags, t => t.datasetId)
     for (const dataset of datasets) {
         dataset.tags = (tagsByDatasetId[dataset.id] || []).map(t =>
-            _.omit(t, "datasetId")
+            lodash.omit(t, "datasetId")
         )
     }
     /*LEFT JOIN variables AS v ON v.datasetId=d.id
@@ -1032,7 +1046,7 @@ api.put("/datasets/:datasetId", async (req: Request, res: Response) => {
             )
 
         const source = newDataset.source
-        const description = _.omit(source, ["name", "id"])
+        const description = lodash.omit(source, ["name", "id"])
         await t.execute(`UPDATE sources SET name=?, description=? WHERE id=?`, [
             source.name,
             JSON.stringify(description),
@@ -1042,13 +1056,18 @@ api.put("/datasets/:datasetId", async (req: Request, res: Response) => {
 
     // Note: not currently in transaction
     try {
-        await syncDatasetToGitRepo(datasetId, {
-            oldDatasetName: dataset.name,
-            commitName: res.locals.user.fullName,
-            commitEmail: res.locals.user.email
-        })
+        await syncDatasetToGitRepo(
+            datasetId,
+            {
+                oldDatasetName: dataset.name,
+                commitName: res.locals.user.fullName,
+                commitEmail: res.locals.user.email
+            },
+            api.serverSettings,
+            api.clientSettings
+        )
     } catch (err) {
-        log.error(err)
+        log.error(err, api.serverSettings)
         // Continue
     }
 
@@ -1110,12 +1129,18 @@ api.delete("/datasets/:datasetId", async (req: Request, res: Response) => {
     })
 
     try {
-        await removeDatasetFromGitRepo(dataset.name, dataset.namespace, {
-            commitName: res.locals.user.fullName,
-            commitEmail: res.locals.user.email
-        })
+        await removeDatasetFromGitRepo(
+            dataset.name,
+            dataset.namespace,
+            {
+                commitName: res.locals.user.fullName,
+                commitEmail: res.locals.user.email
+            },
+            api.serverSettings,
+            api.clientSettings
+        )
     } catch (err) {
-        log.error(err)
+        log.error(err, api.serverSettings)
         // Continue
     }
 
@@ -1140,7 +1165,7 @@ api.get("/tags/:tagId.json", async (req: Request, res: Response) => {
     // NOTE (Mispy): The "uncategorized" tag is special -- it represents all untagged stuff
     // Bit fiddly to handle here but more true to normalized schema than having to remember to add the special tag
     // every time we create a new chart etcs
-    const uncategorized = tagId === UNCATEGORIZED_TAG_ID
+    const uncategorized = tagId === api.serverSettings.UNCATEGORIZED_TAG_ID
 
     const tag = await db.get(
         `
@@ -1178,10 +1203,13 @@ api.get("/tags/:tagId.json", async (req: Request, res: Response) => {
             `,
                 [tag.datasets.map((d: any) => d.id)]
             )
-            const tagsByDatasetId = _.groupBy(datasetTags, t => t.datasetId)
+            const tagsByDatasetId = lodash.groupBy(
+                datasetTags,
+                t => t.datasetId
+            )
             for (const dataset of tag.datasets) {
                 dataset.tags = tagsByDatasetId[dataset.id].map(t =>
-                    _.omit(t, "datasetId")
+                    lodash.omit(t, "datasetId")
                 )
             }
         }
@@ -1194,7 +1222,11 @@ api.get("/tags/:tagId.json", async (req: Request, res: Response) => {
         LEFT JOIN chart_tags ct ON ct.chartId=charts.id
         JOIN users lastEditedByUser ON lastEditedByUser.id = charts.lastEditedByUserId
         LEFT JOIN users publishedByUser ON publishedByUser.id = charts.publishedByUserId
-        WHERE ct.tagId ${tagId === UNCATEGORIZED_TAG_ID ? "IS NULL" : "= ?"}
+        WHERE ct.tagId ${
+            tagId === api.serverSettings.UNCATEGORIZED_TAG_ID
+                ? "IS NULL"
+                : "= ?"
+        }
         GROUP BY charts.id
         ORDER BY charts.updatedAt DESC
     `,
@@ -1321,14 +1353,14 @@ api.get("/posts.json", async req => {
 
     const tagsByPostId = await Post.tagsByPostId()
 
-    // const rows = await wpdb.query(`
+    // const rows = await wpdb.wpdb.query(`
     //     SELECT ID AS id, post_title AS title, post_modified_gmt AS updatedAt, post_type AS type, post_status AS status
     //     FROM wp_posts
     //     WHERE (post_type='post' OR post_type='page')
     //         AND (post_status='publish' OR post_status='pending' OR post_status='private' OR post_status='draft')
     //     ORDER BY post_modified DESC`)
 
-    const authorship = await wpdb.getAuthorship()
+    const authorship = await wpdb.dbInstance.getAuthorship()
 
     for (const post of rows) {
         ;(post as any).authors = authorship.get(post.id) || []
@@ -1339,7 +1371,7 @@ api.get("/posts.json", async req => {
 })
 
 api.get("/newsletterPosts.json", async req => {
-    const rows = await wpdb.query(`
+    const rows = await wpdb.dbInstance.query(`
         SELECT
             ID AS id,
             post_name AS name,
@@ -1353,11 +1385,11 @@ api.get("/newsletterPosts.json", async req => {
         WHERE (post_type='post' OR post_type='page') AND post_status='publish'
         ORDER BY post_date_gmt DESC`)
 
-    const permalinks = await wpdb.getPermalinks()
-    const featuresImages = await wpdb.getFeaturedImages()
+    const permalinksFn = wpdb.dbInstance.getPermalinksFn()
+    const featuresImages = await wpdb.dbInstance.getFeaturedImages()
 
     const posts = rows.map(row => {
-        const slug = permalinks.get(row.id, row.name)
+        const slug = permalinksFn(row.id, row.name)
         return {
             id: row.id,
             title: row.title,
@@ -1368,7 +1400,7 @@ api.get("/newsletterPosts.json", async req => {
             excerpt: row.excerpt,
             slug: slug,
             imageUrl: featuresImages.get(row.id),
-            url: `${BAKED_BASE_URL}/${slug}`
+            url: `${api.clientSettings.BAKED_BASE_URL}/${slug}`
         }
     })
 
@@ -1540,7 +1572,7 @@ api.post("/importDataset", async (req: Request, res: Response) => {
         }
 
         // Insert any new entities into the db
-        const entitiesUniq = _.uniq(entities)
+        const entitiesUniq = lodash.uniq(entities)
         const importEntityRows = entitiesUniq.map(e => [e, false, now, now, ""])
         await t.execute(
             `INSERT IGNORE entities (name, validated, createdAt, updatedAt, displayName) VALUES ?`,
@@ -1553,7 +1585,9 @@ api.post("/importDataset", async (req: Request, res: Response) => {
             [entitiesUniq]
         )
         const entityIdLookup: { [key: string]: number } = {}
-        console.log(_.difference(_.keys(entityIdLookup), entitiesUniq))
+        console.log(
+            lodash.difference(lodash.keys(entityIdLookup), entitiesUniq)
+        )
         for (const row of entityRows) {
             entityIdLookup[row.name] = row.id
         }

@@ -8,12 +8,13 @@ import { observer } from "mobx-react"
 import { computed } from "mobx"
 import React = require("react")
 import { EmbedChart } from "./EmbedChart"
-import { BAKED_GRAPHER_URL } from "settings"
+import { ClientSettings } from "clientSettings"
 import { uniq, capitalize } from "charts/Util"
 import { Country } from "utils/countries"
 
 class ChartResult extends React.Component<{
     hit: ChartHit
+    clientSettings: ClientSettings
     queryCountries: Country[]
 }> {
     @computed get entities() {
@@ -41,13 +42,15 @@ class ChartResult extends React.Component<{
     }
 
     render() {
-        const { hit } = this.props
+        const { hit, clientSettings } = this.props
         const { slug, title } = this
 
         return (
             <li className="ChartResult">
                 {/* <a href={`${BAKED_GRAPHER_URL}/${hit.slug}`} dangerouslySetInnerHTML={{__html: hit._highlightResult.title.value}}/> */}
-                <a href={`${BAKED_GRAPHER_URL}/${slug}`}>{title}</a>
+                <a href={`${clientSettings.BAKED_GRAPHER_URL}/${slug}`}>
+                    {title}
+                </a>
                 {hit.variantName ? (
                     <span className="variantName"> {hit.variantName}</span>
                 ) : (
@@ -131,6 +134,7 @@ function pickEntitiesForChart(hit: ChartHit, queryCountries: Country[]) {
 @observer
 export class SearchResults extends React.Component<{
     results: SiteSearchResults
+    clientSettings: ClientSettings
 }> {
     @computed get bestChartHit(): ChartHit | undefined {
         return this.props.results.charts.length
@@ -168,7 +172,7 @@ export class SearchResults extends React.Component<{
     }
 
     render() {
-        const { results } = this.props
+        const { results, clientSettings } = this.props
 
         return (
             <div className="SearchResults">
@@ -205,12 +209,13 @@ export class SearchResults extends React.Component<{
                         )}
                         {this.bestChartSlug && (
                             <EmbedChart
-                                src={`${BAKED_GRAPHER_URL}/${this.bestChartSlug}`}
+                                src={`${clientSettings.BAKED_GRAPHER_URL}/${this.bestChartSlug}`}
                             />
                         )}
                         <ul>
                             {results.charts.map(hit => (
                                 <ChartResult
+                                    clientSettings={clientSettings}
                                     key={hit.chartId}
                                     hit={hit}
                                     queryCountries={results.countries}

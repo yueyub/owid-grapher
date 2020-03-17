@@ -1,7 +1,7 @@
 import * as React from "react"
-import * as _ from "lodash"
+import * as lodash from "lodash"
 
-import * as settings from "settings"
+import { ClientSettings } from "clientSettings"
 import { Head } from "./Head"
 import { SiteHeader } from "./SiteHeader"
 import { SiteFooter } from "./SiteFooter"
@@ -13,16 +13,18 @@ export const BlogIndexPage = (props: {
     posts: FullPost[]
     pageNum: number
     numPages: number
+    clientSettings: ClientSettings
 }) => {
-    const { posts, pageNum, numPages } = props
-    const pageNums = _.range(1, numPages + 1)
+    const { posts, pageNum, numPages, clientSettings } = props
+    const pageNums = lodash.range(1, numPages + 1)
     const pageTitle = "Latest publications"
 
     return (
         <html>
             <Head
+                clientSettings={clientSettings}
                 canonicalUrl={
-                    `${settings.BAKED_BASE_URL}/blog` +
+                    `${clientSettings.BAKED_BASE_URL}/blog` +
                     (pageNum > 1 ? `/page/${pageNum}` : "")
                 }
                 pageTitle={pageTitle}
@@ -78,7 +80,7 @@ export const BlogIndexPage = (props: {
                         </nav>
                     </div>
                 </main>
-                <SiteFooter />
+                <SiteFooter clientSettings={clientSettings} />
             </body>
         </html>
     )

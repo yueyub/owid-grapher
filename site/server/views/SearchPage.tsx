@@ -1,4 +1,4 @@
-import * as settings from "settings"
+import { ClientSettings } from "clientSettings"
 import * as React from "react"
 import { Head } from "./Head"
 import { SiteHeader } from "./SiteHeader"
@@ -6,11 +6,12 @@ import { SiteFooter } from "./SiteFooter"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faSearch } from "@fortawesome/free-solid-svg-icons/faSearch"
 
-export const SearchPage = () => {
+export const SearchPage = (props: { clientSettings: ClientSettings }) => {
     return (
         <html>
             <Head
-                canonicalUrl={`${settings.BAKED_BASE_URL}/search`}
+                clientSettings={props.clientSettings}
+                canonicalUrl={`${props.clientSettings.BAKED_BASE_URL}/search`}
                 pageTitle="Search"
                 pageDesc="Search articles and charts on Our World in Data."
             />
@@ -31,7 +32,10 @@ export const SearchPage = () => {
                     </form>
                     <div className="searchResults"></div>
                 </main>
-                <SiteFooter hideDonate={true} />
+                <SiteFooter
+                    hideDonate={true}
+                    clientSettings={props.clientSettings}
+                />
                 <script>{`window.runSearchPage()`}</script>
             </body>
         </html>
