@@ -2,7 +2,7 @@ import * as React from "react"
 import { observer } from "mobx-react"
 import { action, runInAction, observable } from "mobx"
 const timeago = require("timeago.js")()
-import * as _ from "lodash"
+import * as lodash from "lodash"
 
 import { Link } from "./Link"
 import { Tag } from "./TagBadge"
@@ -11,6 +11,8 @@ import { EditableTags } from "./Forms"
 import { AdminAppContext, AdminAppContextType } from "./AdminAppContext"
 
 import { ClientSettings } from "clientSettings"
+// todo: remove
+const clientSettings = new ClientSettings()
 
 import { ChartTypeDefsByKey } from "charts/ChartType"
 
@@ -82,7 +84,7 @@ class ChartRow extends React.Component<{
             clientSettings
         } = this.props
 
-        const highlight = searchHighlight || _.identity
+        const highlight = searchHighlight || lodash.identity
 
         return (
             <tr>
@@ -171,7 +173,6 @@ export class ChartList extends React.Component<{
     charts: ChartListItem[]
     searchHighlight?: (text: string) => any
     onDelete?: (chart: ChartListItem) => void
-    clientSettings: ClientSettings
 }> {
     static contextType = AdminAppContext
     context!: AdminAppContextType
@@ -235,7 +236,7 @@ export class ChartList extends React.Component<{
     }
 
     render() {
-        const { charts, searchHighlight, clientSettings } = this.props
+        const { charts, searchHighlight } = this.props
         const { availableTags } = this
         return (
             <table className="table table-bordered">

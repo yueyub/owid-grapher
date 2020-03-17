@@ -229,7 +229,7 @@ class WPDB {
         const posts = await this.getPosts(clientSettings, ["post"])
 
         this.cachedPosts = posts.map(post => {
-            return getFullPost(post, clientSettings.BAKED_BASE_URL, true)
+            return this.getFullPost(post, clientSettings.BAKED_BASE_URL, true)
         })
 
         return this.cachedPosts

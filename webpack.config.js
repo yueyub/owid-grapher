@@ -6,6 +6,7 @@ const Dotenv = require("dotenv-webpack")
 module.exports = (env, argv) => {
     const isProduction = argv.mode === "production"
     return {
+        node: { global: true, fs: "empty" },
         context: __dirname,
         entry: {
             charts: "./charts/client/charts.entry.ts",

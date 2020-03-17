@@ -76,7 +76,10 @@ export const FrontPage = (props: {
 
     return (
         <html>
-            <Head canonicalUrl={clientSettings.BAKED_BASE_URL}>
+            <Head
+                clientSettings={clientSettings}
+                canonicalUrl={clientSettings.BAKED_BASE_URL}
+            >
                 <script
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{

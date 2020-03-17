@@ -9,7 +9,7 @@ import {
     IReactionDisposer,
     when
 } from "mobx"
-import * as _ from "lodash"
+import * as lodash from "lodash"
 import { Prompt, Redirect } from "react-router-dom"
 import * as filenamify from "filenamify"
 const timeago = require("timeago.js")()
@@ -41,7 +41,7 @@ class VariableEditable {
 
     constructor(json: any) {
         for (const key in this) {
-            if (key === "display") _.extend(this.display, json.display)
+            if (key === "display") lodash.extend(this.display, json.display)
             else this[key] = json[key]
         }
     }
@@ -97,7 +97,7 @@ class VariableEditRow extends React.Component<{
                 {
                     property: "y",
                     variableId: this.props.variable.id,
-                    display: _.clone(this.newVariable.display)
+                    display: lodash.clone(this.newVariable.display)
                 }
             ]
         }
@@ -105,15 +105,18 @@ class VariableEditRow extends React.Component<{
 
     @action.bound chartIsReady(chart: ChartConfig) {
         // XXX refactor this with EditorBasicTab
-        if (_.isEmpty(chart.map.data.choroplethData)) {
+        if (lodash.isEmpty(chart.map.data.choroplethData)) {
             chart.props.tab = "chart"
             chart.props.hasMapTab = false
             if (chart.isScatter || chart.isSlopeChart) {
                 chart.data.selectedKeys = []
             } else if (chart.data.primaryDimensions.length > 1) {
-                const entity = _.includes(chart.data.availableEntities, "World")
+                const entity = lodash.includes(
+                    chart.data.availableEntities,
+                    "World"
+                )
                     ? "World"
-                    : _.sample(chart.data.availableEntities)
+                    : lodash.sample(chart.data.availableEntities)
                 chart.data.selectedKeys = chart.data.availableKeys.filter(
                     key => chart.data.lookupKey(key).entity === entity
                 )
@@ -124,12 +127,12 @@ class VariableEditRow extends React.Component<{
                     chart.props.type = ChartType.DiscreteBar
                     chart.data.selectedKeys =
                         chart.data.availableKeys.length > 15
-                            ? _.sampleSize(chart.data.availableKeys, 8)
+                            ? lodash.sampleSize(chart.data.availableKeys, 8)
                             : chart.data.availableKeys
                 } else {
                     chart.data.selectedKeys =
                         chart.data.availableKeys.length > 10
-                            ? _.sampleSize(chart.data.availableKeys, 3)
+                            ? lodash.sampleSize(chart.data.availableKeys, 3)
                             : chart.data.availableKeys
                 }
             }
@@ -148,7 +151,7 @@ class VariableEditRow extends React.Component<{
 
         this.dispose = autorun(() => {
             const chart = this.chart
-            const display = _.clone(this.newVariable.display)
+            const display = lodash.clone(this.newVariable.display)
             if (chart) {
                 runInAction(() => (chart.props.dimensions[0].display = display))
             }
@@ -332,7 +335,7 @@ class DatasetEditable {
     constructor(json: DatasetPageData) {
         for (const key in this) {
             if (key in json) {
-                if (key === "tags") this.tags = _.clone(json.tags)
+                if (key === "tags") this.tags = lodash.clone(json.tags)
                 else this[key] = (json as any)[key]
             }
         }
@@ -351,7 +354,7 @@ class DatasetTagEditor extends React.Component<{
 
     render() {
         const { newDataset, availableTags, isBulkImport } = this.props
-        const tagsByParent = _.groupBy(availableTags, c => c.parentName)
+        const tagsByParent = lodash.groupBy(availableTags, c => c.parentName)
 
         return (
             <div className="form-group">

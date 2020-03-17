@@ -13,6 +13,7 @@
         "dev-admin:inspect": "yarn tsnd:inspect admin/server/server.tsx",
         "dev-site:inspect": "yarn tsnd:inspect site/server/devServer.tsx",
         "dev-webpack": "webpack-dev-server -d",
+        "coverage": "jest --coverage=true --coverageProvider=v8",
         "dev": "npm-run-all --race --parallel dev-admin dev-site dev-webpack",
         "dev-tmux": "tmex dev \"yarn dev-admin\" \"yarn dev-site\" \"yarn dev-webpack\"",
         "typeorm": "yarn tsn node_modules/.bin/typeorm",

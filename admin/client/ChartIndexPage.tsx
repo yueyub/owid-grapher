@@ -8,11 +8,15 @@ import { AdminLayout } from "./AdminLayout"
 import { uniq } from "charts/Util"
 import { ChartList, ChartListItem } from "./ChartList"
 import { AdminAppContext, AdminAppContextType } from "./AdminAppContext"
+import { ClientSettings } from "clientSettings"
 
 interface Searchable {
     chart: ChartListItem
     term: string
 }
+
+// todo: cleanup
+const clientSettings = new ClientSettings()
 
 @observer
 export class ChartIndexPage extends React.Component {
