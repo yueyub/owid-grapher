@@ -16,7 +16,8 @@ import {
 } from "./Util"
 import { ChartConfig } from "./ChartConfig"
 import { observable, computed, action, reaction } from "mobx"
-import { BAKED_GRAPHER_URL } from "settings"
+import { BAKED_GRAPHER_URL, EPOCH_DATE } from "settings"
+import moment = require("moment")
 
 // XXX
 declare var window: { admin: any }
@@ -88,13 +89,16 @@ export class Variable {
         retrievedDate: string
         additionalInfo: string
     }
-    @observable.ref years: number[] = []
+
+    @observable.ref rawYears: number[] = []
     @observable.ref entities: string[] = []
     @observable.ref values: (string | number)[] = []
 
     constructor(json: any) {
         for (const key in this) {
-            if (key in json) {
+            if (key === "rawYears") {
+                this.rawYears = json.years
+            } else if (key in json) {
                 if (key === "display") {
                     extend(this.display, json.display)
                 } else {
@@ -102,6 +106,16 @@ export class Variable {
                 }
             }
         }
+    }
+
+    @computed get years(): number[] {
+        if (this.display.yearIsDay) {
+            const epoch = moment.utc(EPOCH_DATE)
+            const zeroDay = moment.utc(this.display.zeroDay)
+            const diff = zeroDay.diff(epoch, "days")
+            return this.rawYears.map(y => y + diff)
+        }
+        return this.rawYears
     }
 
     @computed get hasNumericValues(): boolean {
