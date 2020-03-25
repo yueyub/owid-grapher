@@ -12,7 +12,8 @@ import {
     values,
     each,
     sortBy,
-    fetchJSON
+    fetchJSON,
+    diffDateISOStringInDays
 } from "./Util"
 import { ChartConfig } from "./ChartConfig"
 import { observable, computed, action, reaction } from "mobx"
@@ -109,10 +110,11 @@ export class Variable {
     }
 
     @computed get years(): number[] {
-        if (this.display.yearIsDay) {
-            const epoch = moment.utc(EPOCH_DATE)
-            const zeroDay = moment.utc(this.display.zeroDay)
-            const diff = zeroDay.diff(epoch, "days")
+        if (this.display.yearIsDay && this.display.zeroDay !== undefined) {
+            const diff = diffDateISOStringInDays(
+                this.display.zeroDay,
+                EPOCH_DATE
+            )
             return this.rawYears.map(y => y + diff)
         }
         return this.rawYears
