@@ -14,7 +14,9 @@ import {
     keyBy,
     fetchJSON,
     each,
-    keys
+    keys,
+    flatten,
+    sortBy
 } from "./Util"
 import {
     observable,
@@ -334,6 +336,13 @@ export class ChartConfig {
     @computed get formatYearFunction() {
         const yearIsDayVar = this.yearIsDayVar
         return yearIsDayVar ? (day: number) => formatDay(day) : formatYear
+    }
+
+    // returns entities sorted
+    @computed get uniqueEntitiesAcrossDimensions() {
+        return sortBy(
+            uniq(flatten(this.data.filledDimensions.map(d => d.entitiesUniq)))
+        )
     }
 
     data: ChartData
