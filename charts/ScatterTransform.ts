@@ -154,8 +154,10 @@ export class ScatterTransform implements IChartTransform {
             .filter(d => d)
     }
 
-    @computed get entitiesToShow(): string[] {
-        let entities = this.hideBackgroundEntities
+    getEntitiesToShow(
+        hideBackgroundEntities = this.hideBackgroundEntities
+    ): string[] {
+        let entities = hideBackgroundEntities
             ? this.chart.data.selectedEntities
             : this.possibleEntities
 
@@ -223,17 +225,10 @@ export class ScatterTransform implements IChartTransform {
 
     // Precompute the data transformation for every timeline year (so later animation is fast)
     // If there's no timeline, this uses the same structure but only computes for a single year
-    @computed private get dataByEntityAndYear(): Map<
-        string,
-        Map<number, ScatterValue>
-    > {
-        const {
-            chart,
-            yearsToCalculate,
-            colors,
-            entitiesToShow,
-            xOverrideYear
-        } = this
+    private getDataByEntityAndYear(
+        entitiesToShow = this.getEntitiesToShow()
+    ): Map<string, Map<number, ScatterValue>> {
+        const { chart, yearsToCalculate, colors, xOverrideYear } = this
         const { filledDimensions } = chart.data
         const validEntityLookup = keyBy(entitiesToShow)
 
@@ -333,7 +328,7 @@ export class ScatterTransform implements IChartTransform {
 
     @computed private get allPoints(): ScatterValue[] {
         const allPoints: ScatterValue[] = []
-        this.dataByEntityAndYear.forEach(dataByYear => {
+        this.getDataByEntityAndYear().forEach(dataByYear => {
             dataByYear.forEach(point => {
                 allPoints.push(point)
             })
@@ -406,7 +401,7 @@ export class ScatterTransform implements IChartTransform {
         if (this.isRelativeMode) {
             let minChange = 0
             let maxChange = 0
-            this.dataByEntityAndYear.forEach(dataByYear => {
+            this.getDataByEntityAndYear().forEach(dataByYear => {
                 const values = Array.from(dataByYear.values()).filter(
                     v => v.x !== 0 && v.y !== 0
                 )
@@ -422,11 +417,22 @@ export class ScatterTransform implements IChartTransform {
             })
             return [minChange, maxChange]
         } else {
+            const allPoints: ScatterValue[] = []
+            this.getDataByEntityAndYearForSelected().forEach(dataByYear => {
+                dataByYear.forEach(point => {
+                    allPoints.push(point)
+                })
+            })
+
             return domainExtent(
-                this.allPoints.map(v => v.x),
+                allPoints.map(v => v.x),
                 this.xScaleType
             )
         }
+    }
+
+    private getDataByEntityAndYearForSelected() {
+        return this.getDataByEntityAndYear(this.getEntitiesToShow(true))
     }
 
     @computed private get yDomainDefault(): [number, number] {
@@ -440,7 +446,7 @@ export class ScatterTransform implements IChartTransform {
         if (this.isRelativeMode) {
             let minChange = 0
             let maxChange = 0
-            this.dataByEntityAndYear.forEach(dataByYear => {
+            this.getDataByEntityAndYear().forEach(dataByYear => {
                 const values = Array.from(dataByYear.values()).filter(
                     v => v.x !== 0 && v.y !== 0
                 )
@@ -456,8 +462,15 @@ export class ScatterTransform implements IChartTransform {
             })
             return [minChange, maxChange]
         } else {
+            const allPoints: ScatterValue[] = []
+            this.getDataByEntityAndYearForSelected().forEach(dataByYear => {
+                dataByYear.forEach(point => {
+                    allPoints.push(point)
+                })
+            })
+
             return domainExtent(
-                this.allPoints.map(v => v.y),
+                allPoints.map(v => v.y),
                 this.yScaleType
             )
         }
@@ -584,7 +597,6 @@ export class ScatterTransform implements IChartTransform {
 
         const {
             chart,
-            dataByEntityAndYear,
             startYear,
             endYear,
             xScaleType,
@@ -597,7 +609,7 @@ export class ScatterTransform implements IChartTransform {
         let currentData: ScatterSeries[] = []
 
         // As needed, join the individual year data points together to create an "arrow chart"
-        dataByEntityAndYear.forEach((dataByYear, entity) => {
+        this.getDataByEntityAndYear().forEach((dataByYear, entity) => {
             // Since scatterplots interrelate two variables via entity overlap, their datakeys are solely entity-based
             const datakey = chart.data.makeEntityDimensionKey(entity, 0)
 
