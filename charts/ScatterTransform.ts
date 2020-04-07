@@ -393,7 +393,7 @@ export class ScatterTransform implements IChartTransform {
     @computed private get xDomainDefault(): [number, number] {
         if (!this.chart.useTimelineDomains) {
             return domainExtent(
-                this.currentValues.map(d => d.x),
+                this.allPointsForSelected().map(d => d.x),
                 this.xScaleType
             )
         }
@@ -417,28 +417,29 @@ export class ScatterTransform implements IChartTransform {
             })
             return [minChange, maxChange]
         } else {
-            const allPoints: ScatterValue[] = []
-            this.getDataByEntityAndYearForSelected().forEach(dataByYear => {
-                dataByYear.forEach(point => {
-                    allPoints.push(point)
-                })
-            })
-
             return domainExtent(
-                allPoints.map(v => v.x),
+                this.allPointsForSelected().map(v => v.x),
                 this.xScaleType
             )
         }
     }
 
-    private getDataByEntityAndYearForSelected() {
-        return this.getDataByEntityAndYear(this.getEntitiesToShow(true))
+    private allPointsForSelected() {
+        const allPoints: ScatterValue[] = []
+        this.getDataByEntityAndYear(this.getEntitiesToShow(true)).forEach(
+            dataByYear => {
+                dataByYear.forEach(point => {
+                    allPoints.push(point)
+                })
+            }
+        )
+        return allPoints
     }
 
     @computed private get yDomainDefault(): [number, number] {
         if (!this.chart.useTimelineDomains) {
             return domainExtent(
-                this.currentValues.map(d => d.y),
+                this.allPointsForSelected().map(d => d.y),
                 this.yScaleType
             )
         }
@@ -462,15 +463,8 @@ export class ScatterTransform implements IChartTransform {
             })
             return [minChange, maxChange]
         } else {
-            const allPoints: ScatterValue[] = []
-            this.getDataByEntityAndYearForSelected().forEach(dataByYear => {
-                dataByYear.forEach(point => {
-                    allPoints.push(point)
-                })
-            })
-
             return domainExtent(
-                allPoints.map(v => v.y),
+                this.allPointsForSelected().map(v => v.y),
                 this.yScaleType
             )
         }
