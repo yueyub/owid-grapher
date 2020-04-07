@@ -425,6 +425,7 @@ export class ScatterTransform implements IChartTransform {
     }
 
     private allPointsForSelected() {
+        if (!this.chart.data.selectedEntities.length) return this.allPoints
         const allPoints: ScatterValue[] = []
         this.getDataByEntityAndYear(this.getEntitiesToShow(true)).forEach(
             dataByYear => {
