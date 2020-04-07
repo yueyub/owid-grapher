@@ -103,19 +103,28 @@ export class HeightedLegend {
         const { fontSize, leftPadding, maxWidth } = this
         const maxTextWidth = maxWidth - leftPadding
 
-        return this.props.items.map(item => {
+        const textWraps = this.props.items.map(
+            item =>
+                new TextWrap({
+                    text: item.label,
+                    maxWidth: maxTextWidth,
+                    fontSize
+                })
+        )
+
+        const maxAnnotationWidth = Math.max(
+            ...textWraps.map(wrap => wrap.width)
+        )
+
+        return this.props.items.map((item, index) => {
             const annotationTextWrap = item.annotation
                 ? new TextWrap({
                       text: item.annotation,
-                      maxWidth: maxTextWidth,
+                      maxWidth: maxAnnotationWidth,
                       fontSize: fontSize * 0.9
                   })
                 : undefined
-            const textWrap = new TextWrap({
-                text: item.label,
-                maxWidth: maxTextWidth,
-                fontSize
-            })
+            const textWrap = textWraps[index]
             return {
                 item,
                 textWrap,
