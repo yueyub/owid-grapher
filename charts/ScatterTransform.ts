@@ -83,22 +83,16 @@ export class ScatterTransform implements IChartTransform {
 
     // Scatterplot should have exactly one dimension for each of x and y
     // The y dimension is treated as the "primary" variable
-    @computed get yDimension(): DimensionWithData | undefined {
+    @computed private get yDimension(): DimensionWithData | undefined {
         return this.chart.data.filledDimensions.find(d => d.property === "y")
     }
-    @computed get xDimension(): DimensionWithData | undefined {
+    @computed private get xDimension(): DimensionWithData | undefined {
         return this.chart.data.filledDimensions.find(d => d.property === "x")
     }
-    @computed get colorDimension(): DimensionWithData | undefined {
+    @computed private get colorDimension(): DimensionWithData | undefined {
         return this.chart.data.filledDimensions.find(
             d => d.property === "color"
         )
-    }
-    @computed get axisDimensions(): DimensionWithData[] {
-        const dimensions = []
-        if (this.yDimension) dimensions.push(this.yDimension)
-        if (this.xDimension) dimensions.push(this.xDimension)
-        return dimensions
     }
 
     // Possible to override the x axis dimension to target a special year
@@ -127,10 +121,10 @@ export class ScatterTransform implements IChartTransform {
 
     // Unlike other charts, the scatterplot shows all available data by default, and the selection
     // is just for emphasis. But this behavior can be disabled.
-    @computed get hideBackgroundEntities(): boolean {
+    @computed private get hideBackgroundEntities(): boolean {
         return this.chart.addCountryMode === "disabled"
     }
-    @computed get possibleEntities(): string[] {
+    @computed private get possibleEntities(): string[] {
         const yEntities = this.yDimension
             ? this.yDimension.variable.entitiesUniq
             : []
@@ -182,7 +176,7 @@ export class ScatterTransform implements IChartTransform {
     // The years for which there MAY be data on the scatterplot
     // Not all of these will necessarily end up on the timeline, because there may be no x/y entity overlap for that year
     // e.g. https://ourworldindata.org/grapher/life-expectancy-years-vs-real-gdp-per-capita-2011us
-    @computed get possibleDataYears(): number[] {
+    @computed private get possibleDataYears(): number[] {
         const yDimensionYears = this.yDimension ? this.yDimension.yearsUniq : []
         const xDimensionYears = this.xDimension ? this.xDimension.yearsUniq : []
 
@@ -191,7 +185,7 @@ export class ScatterTransform implements IChartTransform {
     }
 
     // The years for which we intend to calculate output data
-    @computed get yearsToCalculate(): number[] {
+    @computed private get yearsToCalculate(): number[] {
         return this.possibleDataYears
 
         // XXX: Causes issues here https://ourworldindata.org/grapher/fish-consumption-vs-gdp-per-capita
@@ -229,7 +223,7 @@ export class ScatterTransform implements IChartTransform {
 
     // Precompute the data transformation for every timeline year (so later animation is fast)
     // If there's no timeline, this uses the same structure but only computes for a single year
-    @computed get dataByEntityAndYear(): Map<
+    @computed private get dataByEntityAndYear(): Map<
         string,
         Map<number, ScatterValue>
     > {
@@ -337,7 +331,7 @@ export class ScatterTransform implements IChartTransform {
         return dataByEntityAndYear
     }
 
-    @computed get allPoints(): ScatterValue[] {
+    @computed private get allPoints(): ScatterValue[] {
         const allPoints: ScatterValue[] = []
         this.dataByEntityAndYear.forEach(dataByYear => {
             dataByYear.forEach(point => {
@@ -352,11 +346,11 @@ export class ScatterTransform implements IChartTransform {
         return sortedUniq(sortBy(this.allPoints.map(point => point.year)))
     }
 
-    @computed get minTimelineYear(): number {
+    @computed private get minTimelineYear(): number {
         return defaultTo(this.timelineYears[0], -Infinity)
     }
 
-    @computed get maxTimelineYear(): number {
+    @computed private get maxTimelineYear(): number {
         return defaultTo(
             this.timelineYears[this.timelineYears.length - 1],
             Infinity
@@ -394,14 +388,14 @@ export class ScatterTransform implements IChartTransform {
         else return this.maxTimelineYear
     }
 
-    @computed get currentValues(): ScatterValue[] {
+    @computed private get currentValues(): ScatterValue[] {
         const currentValues: ScatterValue[] = []
         this.currentData.forEach(group => currentValues.push(...group.values))
         return currentValues
     }
 
     // domains across the entire timeline
-    @computed get xDomainDefault(): [number, number] {
+    @computed private get xDomainDefault(): [number, number] {
         if (!this.chart.useTimelineDomains) {
             return domainExtent(
                 this.currentValues.map(d => d.x),
@@ -435,7 +429,7 @@ export class ScatterTransform implements IChartTransform {
         }
     }
 
-    @computed get yDomainDefault(): [number, number] {
+    @computed private get yDomainDefault(): [number, number] {
         if (!this.chart.useTimelineDomains) {
             return domainExtent(
                 this.currentValues.map(d => d.y),
@@ -476,11 +470,11 @@ export class ScatterTransform implements IChartTransform {
         else return domainExtent(sizeValues, "linear")
     }
 
-    @computed get yScaleType() {
+    @computed private get yScaleType() {
         return this.isRelativeMode ? "linear" : this.chart.yAxis.scaleType
     }
 
-    @computed get yAxisLabelBase(): string | undefined {
+    @computed private get yAxisLabelBase(): string | undefined {
         return this.yDimension && this.yDimension.displayName
     }
 
@@ -519,11 +513,11 @@ export class ScatterTransform implements IChartTransform {
         ) as AxisSpec
     }
 
-    @computed get xScaleType(): "linear" | "log" {
+    @computed private get xScaleType(): "linear" | "log" {
         return this.isRelativeMode ? "linear" : this.chart.xAxis.scaleType
     }
 
-    @computed get xAxisLabelBase(): string | undefined {
+    @computed private get xAxisLabelBase(): string | undefined {
         const xDimName = this.xDimension && this.xDimension.displayName
         if (this.xOverrideYear !== undefined)
             return `${xDimName} in ${this.xOverrideYear}`
