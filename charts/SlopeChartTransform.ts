@@ -2,7 +2,7 @@ import { some, union, min, max, find, isEmpty } from "./Util"
 import { computed } from "mobx"
 import { ChartConfig } from "./ChartConfig"
 import { defaultTo, defaultWith, findClosest } from "./Util"
-import { DimensionWithData } from "./DimensionWithData"
+import { ChartDimensionWithOwidVariable } from "./ChartDimensionWithOwidVariable"
 import { SlopeChartSeries, SlopeChartValue } from "./LabelledSlopes"
 import { IChartTransform } from "./IChartTransform"
 import { Colorizer, Colorable } from "./Colorizer"
@@ -100,20 +100,24 @@ export class SlopeChartTransform implements IChartTransform {
         return [this.startYear, this.endYear]
     }
 
-    @computed.struct get sizeDim(): DimensionWithData | undefined {
+    @computed.struct get sizeDim(): ChartDimensionWithOwidVariable | undefined {
         return find(
             this.chart.data.filledDimensions,
             d => d.property === "size"
         )
     }
 
-    @computed.struct get colorDimension(): DimensionWithData | undefined {
+    @computed.struct get colorDimension():
+        | ChartDimensionWithOwidVariable
+        | undefined {
         return this.chart.data.filledDimensions.find(
             d => d.property === "color"
         )
     }
 
-    @computed.struct get yDimension(): DimensionWithData | undefined {
+    @computed.struct get yDimension():
+        | ChartDimensionWithOwidVariable
+        | undefined {
         return find(this.chart.data.filledDimensions, d => d.property === "y")
     }
 

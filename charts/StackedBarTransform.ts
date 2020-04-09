@@ -17,7 +17,7 @@ import { ChartConfig } from "./ChartConfig"
 import { StackedBarValue, StackedBarSeries } from "./StackedBarChart"
 import { AxisSpec } from "./AxisSpec"
 import { IChartTransform } from "./IChartTransform"
-import { DimensionWithData } from "./DimensionWithData"
+import { ChartDimensionWithOwidVariable } from "./ChartDimensionWithOwidVariable"
 import { EntityDimensionKey } from "./EntityDimensionKey"
 import { Colorizer, Colorable } from "./Colorizer"
 
@@ -46,10 +46,12 @@ export class StackedBarTransform implements IChartTransform {
         else return undefined
     }
 
-    @computed get primaryDimension(): DimensionWithData | undefined {
+    @computed get primaryDimension():
+        | ChartDimensionWithOwidVariable
+        | undefined {
         return find(this.chart.data.filledDimensions, d => d.property === "y")
     }
-    @computed get colorDimension(): DimensionWithData | undefined {
+    @computed get colorDimension(): ChartDimensionWithOwidVariable | undefined {
         return find(
             this.chart.data.filledDimensions,
             d => d.property === "color"
@@ -189,7 +191,7 @@ export class StackedBarTransform implements IChartTransform {
 
             for (let i = 0; i <= dimension.years.length; i += 1) {
                 const year = dimension.years[i]
-                const entity = dimension.entities[i]
+                const entity = dimension.entityNames[i]
                 const value = +dimension.values[i]
                 const entityDimensionKey = chart.data.makeEntityDimensionKey(
                     entity,

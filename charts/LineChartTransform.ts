@@ -19,7 +19,7 @@ import { LineChartSeries, LineChartValue } from "./LineChart"
 import { AxisSpec } from "./AxisSpec"
 import { ColorSchemes, ColorScheme } from "./ColorSchemes"
 import { IChartTransform } from "./IChartTransform"
-import { DimensionWithData } from "./DimensionWithData"
+import { ChartDimensionWithOwidVariable } from "./ChartDimensionWithOwidVariable"
 import { findIndex } from "./Util"
 
 // Responsible for translating chart configuration into the form
@@ -70,7 +70,7 @@ export class LineChartTransform implements IChartTransform {
             for (let i = 0; i < dimension.years.length; i++) {
                 const year = dimension.years[i]
                 const value = parseFloat(dimension.values[i] as string)
-                const entity = dimension.entities[i]
+                const entity = dimension.entityNames[i]
                 const entityDimensionKey = chart.data.makeEntityDimensionKey(
                     entity,
                     dimIndex
@@ -210,7 +210,9 @@ export class LineChartTransform implements IChartTransform {
         }
     }
 
-    @computed get yDimensionFirst(): DimensionWithData | undefined {
+    @computed get yDimensionFirst():
+        | ChartDimensionWithOwidVariable
+        | undefined {
         return this.chart.data.filledDimensions.find(d => d.property === "y")
     }
 

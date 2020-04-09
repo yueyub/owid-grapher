@@ -3,12 +3,12 @@
 
 import { observable } from "mobx"
 import { extend } from "./Util"
-import { VariableDisplaySettings } from "./Variable"
+import { OwidVariableDisplaySettings } from "./owidData/OwidVariable"
 
 export class ChartDimension {
     @observable property!: string
     @observable variableId!: number
-    @observable display: VariableDisplaySettings = {
+    @observable display: OwidVariableDisplaySettings = {
         name: undefined,
         unit: undefined,
         shortUnit: undefined,

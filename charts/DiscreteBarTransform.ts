@@ -12,7 +12,7 @@ import {
 import { ChartConfig } from "./ChartConfig"
 import { DiscreteBarDatum } from "./DiscreteBarChart"
 import { IChartTransform } from "./IChartTransform"
-import { DimensionWithData } from "./DimensionWithData"
+import { ChartDimensionWithOwidVariable } from "./ChartDimensionWithOwidVariable"
 import { ColorSchemes } from "./ColorSchemes"
 import { TickFormattingOptions } from "./TickFormattingOptions"
 
@@ -37,7 +37,7 @@ export class DiscreteBarTransform implements IChartTransform {
         else return undefined
     }
 
-    @computed get primaryDimensions(): DimensionWithData[] {
+    @computed get primaryDimensions(): ChartDimensionWithOwidVariable[] {
         return this.chart.data.filledDimensions.filter(d => d.property === "y")
     }
 
@@ -92,7 +92,7 @@ export class DiscreteBarTransform implements IChartTransform {
 
             for (let i = 0; i < dimension.years.length; i++) {
                 const year = dimension.years[i]
-                const entity = dimension.entities[i]
+                const entity = dimension.entityNames[i]
                 const datakey = chart.data.makeEntityDimensionKey(
                     entity,
                     dimIndex
@@ -195,7 +195,7 @@ export class DiscreteBarTransform implements IChartTransform {
         filledDimensions.forEach((dimension, dimIndex) => {
             for (let i = 0; i < dimension.years.length; i++) {
                 const year = dimension.years[i]
-                const entity = dimension.entities[i]
+                const entity = dimension.entityNames[i]
                 const datakey = chart.data.makeEntityDimensionKey(
                     entity,
                     dimIndex

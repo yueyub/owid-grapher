@@ -21,7 +21,7 @@ import {
 } from "./Util"
 import { computed } from "mobx"
 import { defaultTo, defaultWith, first, last } from "./Util"
-import { DimensionWithData } from "./DimensionWithData"
+import { ChartDimensionWithOwidVariable } from "./ChartDimensionWithOwidVariable"
 import { ScatterSeries, ScatterValue } from "./PointsWithLabels"
 import { AxisSpec } from "./AxisSpec"
 import { formatValue, domainExtent, findClosest } from "./Util"
@@ -83,13 +83,19 @@ export class ScatterTransform implements IChartTransform {
 
     // Scatterplot should have exactly one dimension for each of x and y
     // The y dimension is treated as the "primary" variable
-    @computed private get yDimension(): DimensionWithData | undefined {
+    @computed private get yDimension():
+        | ChartDimensionWithOwidVariable
+        | undefined {
         return this.chart.data.filledDimensions.find(d => d.property === "y")
     }
-    @computed private get xDimension(): DimensionWithData | undefined {
+    @computed private get xDimension():
+        | ChartDimensionWithOwidVariable
+        | undefined {
         return this.chart.data.filledDimensions.find(d => d.property === "x")
     }
-    @computed private get colorDimension(): DimensionWithData | undefined {
+    @computed private get colorDimension():
+        | ChartDimensionWithOwidVariable
+        | undefined {
         return this.chart.data.filledDimensions.find(
             d => d.property === "color"
         )
@@ -102,7 +108,8 @@ export class ScatterTransform implements IChartTransform {
     }
 
     set xOverrideYear(value: number | undefined) {
-        ;(this.xDimension as DimensionWithData).props.targetYear = value
+        ;(this
+            .xDimension as ChartDimensionWithOwidVariable).props.targetYear = value
     }
 
     // In relative mode, the timeline scatterplot calculates changes relative
@@ -248,7 +255,7 @@ export class ScatterTransform implements IChartTransform {
             for (let i = 0; i < dimension.years.length; i++) {
                 const year = dimension.years[i]
                 const value = dimension.values[i]
-                const entity = dimension.entities[i]
+                const entity = dimension.entityNames[i]
 
                 if (!validEntityLookup[entity]) continue
 
