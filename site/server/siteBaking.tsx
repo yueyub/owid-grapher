@@ -29,6 +29,7 @@ import { FeedbackPage } from "./views/FeedbackPage"
 import { isExplorable, FORCE_EXPLORABLE_CHART_IDS } from "utils/charts"
 import { Indicator } from "charts/Indicator"
 import { BLOG_POSTS_PER_PAGE } from "settings"
+import CovidDashboardPage from "./views/CovidDashboardPage"
 
 // Wrap ReactDOMServer to stick the doctype on
 export function renderToHtmlPage(element: any) {
@@ -76,6 +77,10 @@ export async function renderExplorePage() {
 // Only used in the dev server
 export async function renderCovidPage() {
     return renderToHtmlPage(<CovidPage />)
+}
+
+export async function renderCovidDashboardPage() {
+    return renderToHtmlPage(<CovidDashboardPage />)
 }
 
 export async function renderExplorableIndicatorsJson() {

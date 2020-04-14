@@ -17,7 +17,8 @@ import {
     renderNotFoundPage,
     renderBlogByPageNum,
     renderExplorableIndicatorsJson,
-    renderCovidPage
+    renderCovidPage,
+    renderCovidDashboardPage
 } from "site/server/siteBaking"
 import { chartDataJson, chartPageFromSlug } from "site/server/chartBaking"
 import {
@@ -102,6 +103,10 @@ devServer.get("/explore", async (req, res) => {
 // Route only available on the dev server
 devServer.get("/covid", async (req, res) => {
     res.send(await renderCovidPage())
+})
+
+devServer.get("/covidDashboard", async (req, res) => {
+    res.send(await renderCovidDashboardPage())
 })
 
 devServer.get("/explore/indicators.json", async (req, res) => {
