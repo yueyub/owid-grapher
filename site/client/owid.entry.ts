@@ -18,6 +18,7 @@ import { runDonateForm } from "./DonateForm"
 import { getParent } from "./utils"
 import { Grapher } from "site/client/Grapher"
 import { ChartView } from "charts/ChartView"
+import { DashboardView } from "charts/DashboardView"
 import { ExploreView } from "charts/ExploreView"
 import { runVariableCountryPage } from "./runVariableCountryPage"
 import { runCountryProfilePage } from "./runCountryProfilePage"
@@ -32,6 +33,7 @@ import { runCovid } from "./covid/index"
 declare var window: any
 window.Grapher = Grapher
 window.ChartView = ChartView
+window.DashboardView = DashboardView
 window.ExploreView = ExploreView
 window.App = window.App || {}
 window.runChartsIndexPage = runChartsIndexPage

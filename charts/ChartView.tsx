@@ -56,19 +56,23 @@ export class ChartView extends React.Component<ChartViewProps> {
         containerNode,
         isEditor,
         isEmbed,
-        queryStr
+        queryStr,
+        chart
     }: {
         jsonConfig: ChartConfigProps
         containerNode: HTMLElement
         isEditor?: boolean
         isEmbed?: true
         queryStr?: string
+        chart?: ChartConfig
     }) {
         let chartView
-        const chart = new ChartConfig(jsonConfig, {
-            isEmbed: isEmbed,
-            queryStr: queryStr
-        })
+        chart =
+            chart ||
+            new ChartConfig(jsonConfig, {
+                isEmbed: isEmbed,
+                queryStr: queryStr
+            })
 
         function render() {
             const rect = containerNode.getBoundingClientRect()

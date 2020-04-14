@@ -29,7 +29,7 @@ import { FeedbackPage } from "./views/FeedbackPage"
 import { isExplorable, FORCE_EXPLORABLE_CHART_IDS } from "utils/charts"
 import { Indicator } from "charts/Indicator"
 import { BLOG_POSTS_PER_PAGE } from "settings"
-import CovidDashboardPage from "./views/CovidDashboardPage"
+import { CovidDashboardPage } from "./views/DashboardPages"
 
 // Wrap ReactDOMServer to stick the doctype on
 export function renderToHtmlPage(element: any) {
