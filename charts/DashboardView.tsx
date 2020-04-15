@@ -3,7 +3,7 @@ import React from "react"
 import { Bounds } from "./Bounds"
 import ReactDOM from "react-dom"
 import { ChartView } from "./ChartView"
-import { EntitySelectorSidebar } from "./EntitySelector"
+import { EntitySelectorSidebar } from "./EntitySelectorSidebar"
 import { ChartConfig } from "./ChartConfig"
 import { dashboardTempStub } from "./DashboardTempStub"
 

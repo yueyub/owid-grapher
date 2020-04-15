@@ -53,8 +53,8 @@ export class Lines extends React.Component<LinesProps> {
         const { data, xScale, yScale, focusKeys } = this.props
         return map(data, series => {
             return {
-                key: series.key,
-                displayKey: `key-${makeSafeForCSS(series.key)}`,
+                key: series.entityDimensionKey,
+                displayKey: `key-${makeSafeForCSS(series.entityDimensionKey)}`,
                 color: series.color,
                 values: series.values.map(v => {
                     return new Vector2(
@@ -62,7 +62,9 @@ export class Lines extends React.Component<LinesProps> {
                         Math.round(yScale.place(v.y))
                     )
                 }),
-                isFocus: !focusKeys.length || includes(focusKeys, series.key),
+                isFocus:
+                    !focusKeys.length ||
+                    includes(focusKeys, series.entityDimensionKey),
                 isProjection: series.isProjection
             }
         })

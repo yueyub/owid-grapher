@@ -34,10 +34,11 @@ import { Vector2 } from "./Vector2"
 import { Triangle } from "./Marks"
 import { select } from "d3-selection"
 import { getElementWithHalo } from "./Halos"
+import { EntityDimensionKey } from "./EntityDimensionKey"
 
 export interface ScatterSeries {
     color: string
-    key: string
+    entityDimensionKey: EntityDimensionKey
     label: string
     size: number
     values: ScatterValue[]
@@ -241,7 +242,7 @@ export class PointsWithLabels extends React.Component<PointsWithLabelsProps> {
     @computed private get focusKeys(): string[] {
         return intersection(
             this.props.focusKeys || [],
-            this.data.map(g => g.key)
+            this.data.map(g => g.entityDimensionKey)
         )
     }
 
@@ -328,9 +329,9 @@ export class PointsWithLabels extends React.Component<PointsWithLabelsProps> {
                 })
 
                 return {
-                    key: d.key,
-                    displayKey: "key-" + makeSafeForCSS(d.key),
-                    color: d.color || defaultColorScale(d.key),
+                    key: d.entityDimensionKey,
+                    displayKey: "key-" + makeSafeForCSS(d.entityDimensionKey),
+                    color: d.color || defaultColorScale(d.entityDimensionKey),
                     size: (last(values) as any).size,
                     values: values,
                     text: d.label,
@@ -678,7 +679,10 @@ export class PointsWithLabels extends React.Component<PointsWithLabelsProps> {
                 this.hoverKey = null*/
 
             if (closestSeries && this.props.onMouseOver) {
-                const datum = find(this.data, d => d.key === closestSeries.key)
+                const datum = find(
+                    this.data,
+                    d => d.entityDimensionKey === closestSeries.key
+                )
                 if (datum) this.props.onMouseOver(datum)
             }
         })

@@ -347,7 +347,7 @@ export class ChartUrl implements ObservableUrl {
                                     entityMeta.code === entityCodes[0] ||
                                     entityMeta.name === entityCodes[0]
                                 )
-                                    chart.data.switchEntity(entityMeta.id)
+                                    chart.data.setSelectedEntity(entityMeta.id)
                             })
                         } else {
                             chart.data.selectedKeys = filter(

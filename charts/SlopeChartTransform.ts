@@ -121,7 +121,7 @@ export class SlopeChartTransform extends ChartTransform {
 
         const keyData: string[] = []
         data.forEach(series => {
-            keyData.push(series.key)
+            keyData.push(series.entityDimensionKey)
         })
         return keyData
     }
@@ -154,14 +154,17 @@ export class SlopeChartTransform extends ChartTransform {
                 })
             }
 
-            const key = chart.data.makeEntityDimensionKey(
+            const entityDimensionKey = chart.data.makeEntityDimensionKey(
                 entity,
                 yDimension.index
             )
             return {
-                key: key,
+                entityDimensionKey,
                 label: entityKey[entity].name,
-                color: keyColors[key] || colorByEntity.get(entity) || "#ff7f0e",
+                color:
+                    keyColors[entityDimensionKey] ||
+                    colorByEntity.get(entity) ||
+                    "#ff7f0e",
                 size: sizeByEntity.get(entity) || 1,
                 values: slopeValues
             }

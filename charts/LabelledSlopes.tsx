@@ -35,6 +35,7 @@ import { TextWrap } from "./TextWrap"
 import { NoData } from "./NoData"
 import { ScaleSelector } from "./ScaleSelector"
 import { getRelativeMouse, domainExtent } from "./Util"
+import { EntityDimensionKey } from "charts/EntityDimensionKey"
 
 export interface SlopeChartValue {
     x: number
@@ -43,7 +44,7 @@ export interface SlopeChartValue {
 
 export interface SlopeChartSeries {
     label: string
-    key: string
+    entityDimensionKey: EntityDimensionKey
     color: string
     size: number
     values: SlopeChartValue[]
@@ -315,14 +316,14 @@ export class LabelledSlopes extends React.Component<LabelledSlopesProps> {
     @computed get focusKeys(): string[] {
         return intersection(
             this.props.focusKeys || [],
-            this.data.map(g => g.key)
+            this.data.map(g => g.entityDimensionKey)
         )
     }
 
     @computed get hoverKeys(): string[] {
         return intersection(
             this.props.hoverKeys || [],
-            this.data.map(g => g.key)
+            this.data.map(g => g.entityDimensionKey)
         )
     }
 
@@ -468,7 +469,7 @@ export class LabelledSlopes extends React.Component<LabelledSlopesProps> {
                 leftLabel: leftLabel,
                 rightLabel: rightLabel,
                 labelFontSize: fontSize,
-                key: series.key,
+                key: series.entityDimensionKey,
                 isFocused: false,
                 isHovered: false,
                 hasLeftLabel: true,

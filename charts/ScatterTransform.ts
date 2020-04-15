@@ -141,7 +141,7 @@ export class ScatterTransform extends ChartTransform {
 
         const keyData: string[] = []
         currentData.forEach(series => {
-            keyData.push(series.key)
+            keyData.push(series.entityDimensionKey)
         })
         return keyData
     }
@@ -555,11 +555,14 @@ export class ScatterTransform extends ChartTransform {
         // As needed, join the individual year data points together to create an "arrow chart"
         this.getDataByEntityAndYear().forEach((dataByYear, entity) => {
             // Since scatterplots interrelate two variables via entity overlap, their datakeys are solely entity-based
-            const datakey = chart.data.makeEntityDimensionKey(entity, 0)
+            const entityDimensionKey = chart.data.makeEntityDimensionKey(
+                entity,
+                0
+            )
 
             const group = {
-                key: datakey,
-                label: chart.data.getLabelForKey(datakey),
+                entityDimensionKey: entityDimensionKey,
+                label: chart.data.getLabelForKey(entityDimensionKey),
                 color: "#ffcb1f", // Default color
                 size: 0,
                 values: []
@@ -575,7 +578,7 @@ export class ScatterTransform extends ChartTransform {
             // const lastPoint = last(group.values)
 
             if (group && group.values.length) {
-                const keyColor = keyColors[datakey]
+                const keyColor = keyColors[entityDimensionKey]
                 if (keyColor !== undefined) {
                     group.color = keyColor
                 } else {

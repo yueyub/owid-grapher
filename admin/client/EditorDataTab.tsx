@@ -66,8 +66,8 @@ class DataKeyItem extends React.Component<DataKeyItemProps> {
 class KeysSection extends React.Component<{ chart: ChartConfig }> {
     @observable.ref dragKey?: EntityDimensionKey
 
-    @action.bound onAddKey(key: string) {
-        this.props.chart.data.selectKey(key)
+    @action.bound onAddKey(key: EntityDimensionKey) {
+        this.props.chart.data.selectEntityDimensionKey(key)
     }
 
     @action.bound onStartDrag(key: EntityDimensionKey) {
