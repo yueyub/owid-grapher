@@ -6,6 +6,7 @@ import { EntityDimensionInfo } from "./ChartData"
 import { FuzzySearch } from "./FuzzySearch"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faTimes } from "@fortawesome/free-solid-svg-icons/faTimes"
+import { EntityDimensionKey } from "./EntityDimensionKey"
 
 @observer
 export class EntitySelectorSidebar extends React.Component<{
@@ -40,8 +41,8 @@ export class EntitySelectorSidebar extends React.Component<{
             : this.availableEntities
     }
 
-    isSelectedKey(key: string): boolean {
-        return !!this.props.chart.data.selectedKeysByKey[key]
+    isSelectedKey(entityDimensionKey: EntityDimensionKey): boolean {
+        return !!this.props.chart.data.selectedKeysByKey[entityDimensionKey]
     }
 
     @action.bound onSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {

@@ -293,7 +293,9 @@ export class ChartData {
         this.selectedKeys = this.selectedKeys.concat([key])
     }
 
-    @computed.struct get keyColors(): { [datakey: string]: Color | undefined } {
+    @computed.struct get keyColors(): {
+        [entityDimensionKey: string]: Color | undefined
+    } {
         const keyColors: {
             [entityDimensionKey: string]: Color | undefined
         } = {}
@@ -303,8 +305,8 @@ export class ChartData {
         return keyColors
     }
 
-    setKeyColor(datakey: EntityDimensionKey, color: Color | undefined) {
-        const meta = this.lookupKey(datakey)
+    setKeyColor(key: EntityDimensionKey, color: Color | undefined) {
+        const meta = this.lookupKey(key)
         const selectedData = cloneDeep(this.chart.props.selectedData)
         selectedData.forEach(d => {
             if (d.entityId === meta.entityId && d.index === meta.index) {
@@ -350,22 +352,24 @@ export class ChartData {
         const { chart } = this
         if (!this.isReady) return
 
-        const selection = map(keys, datakey => {
-            const { entity, index } = this.lookupKey(datakey)
+        const selection = map(keys, key => {
+            const { entity, index } = this.lookupKey(key)
             return {
                 entityId: chart.entityMetaByKey[entity].id,
                 index: index,
-                color: this.keyColors[datakey]
+                color: this.keyColors[key]
             }
         })
         chart.props.selectedData = selection
     }
 
-    @computed get selectedKeysByKey(): { [key: string]: EntityDimensionKey } {
+    @computed get selectedKeysByKey(): {
+        [entityDimensionKey: string]: EntityDimensionKey
+    } {
         return keyBy(this.selectedKeys)
     }
 
-    // Calculate the available datakeys and their associated info
+    // Calculate the available entityDimensionKeys and their associated info
     @computed get entityDimensionMap(): Map<
         EntityDimensionKey,
         EntityDimensionInfo

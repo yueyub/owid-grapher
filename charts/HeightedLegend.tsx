@@ -150,8 +150,8 @@ export interface HeightedLegendComponentProps {
     yScale: AxisScale
     focusKeys: EntityDimensionKey[]
     areMarksClickable: boolean
-    onMouseOver?: (key: string) => void
-    onClick?: (key: string) => void
+    onMouseOver?: (key: EntityDimensionKey) => void
+    onClick?: (key: EntityDimensionKey) => void
     onMouseLeave?: () => void
 }
 

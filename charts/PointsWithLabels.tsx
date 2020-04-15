@@ -329,7 +329,7 @@ export class PointsWithLabels extends React.Component<PointsWithLabelsProps> {
                 })
 
                 return {
-                    key: d.entityDimensionKey,
+                    entityDimensionKey: d.entityDimensionKey,
                     displayKey: "key-" + makeSafeForCSS(d.entityDimensionKey),
                     color: d.color || defaultColorScale(d.entityDimensionKey),
                     size: (last(values) as any).size,

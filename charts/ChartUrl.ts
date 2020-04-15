@@ -352,8 +352,8 @@ export class ChartUrl implements ObservableUrl {
                         } else {
                             chart.data.selectedKeys = filter(
                                 chart.data.availableKeys,
-                                datakey => {
-                                    const meta = chart.data.lookupKey(datakey)
+                                key => {
+                                    const meta = chart.data.lookupKey(key)
                                     const entityMeta =
                                         chart.entityMetaByKey[meta.entity]
                                     return (

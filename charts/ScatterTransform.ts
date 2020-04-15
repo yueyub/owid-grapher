@@ -554,7 +554,7 @@ export class ScatterTransform extends ChartTransform {
 
         // As needed, join the individual year data points together to create an "arrow chart"
         this.getDataByEntityAndYear().forEach((dataByYear, entity) => {
-            // Since scatterplots interrelate two variables via entity overlap, their datakeys are solely entity-based
+            // Since scatterplots interrelate two variables via entity overlap, their entityDimensionKeys are solely entity-based
             const entityDimensionKey = chart.data.makeEntityDimensionKey(
                 entity,
                 0

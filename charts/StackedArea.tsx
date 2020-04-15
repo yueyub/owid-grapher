@@ -286,7 +286,7 @@ export class StackedArea extends React.Component<{
     }
 
     @observable hoverKey?: string
-    @action.bound onLegendClick(datakey: string) {
+    @action.bound onLegendClick(key: EntityDimensionKey) {
         if (this.chart.data.canAddData) {
             this.context.chartView.isSelectingData = true
         }
