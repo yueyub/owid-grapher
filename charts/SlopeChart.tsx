@@ -52,7 +52,7 @@ export class SlopeChart extends React.Component<{
     }
 
     @action.bound onSlopeMouseOver(slopeProps: SlopeProps) {
-        this.hoverKey = slopeProps.key
+        this.hoverKey = slopeProps.entityDimensionKey
     }
 
     @action.bound onSlopeMouseLeave() {

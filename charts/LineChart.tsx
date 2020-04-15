@@ -88,7 +88,7 @@ export class LineChart extends React.Component<{
                 ) || undefined
             return {
                 color: series.color,
-                key: series.entityDimensionKey,
+                entityDimensionKey: series.entityDimensionKey,
                 // E.g. https://ourworldindata.org/grapher/size-poverty-gap-world
                 label: this.chart.hideLegend
                     ? ""

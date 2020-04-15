@@ -20,7 +20,7 @@ export interface LinesProps {
 }
 
 interface LineRenderSeries {
-    key: string
+    entityDimensionKey: EntityDimensionKey
     displayKey: string
     color: string
     values: Vector2[]
@@ -53,7 +53,7 @@ export class Lines extends React.Component<LinesProps> {
         const { data, xScale, yScale, focusKeys } = this.props
         return map(data, series => {
             return {
-                key: series.entityDimensionKey,
+                entityDimensionKey: series.entityDimensionKey,
                 displayKey: `key-${makeSafeForCSS(series.entityDimensionKey)}`,
                 color: series.color,
                 values: series.values.map(v => {
@@ -167,7 +167,7 @@ export class Lines extends React.Component<LinesProps> {
         return this.backgroundGroups.map(series => (
             <g key={series.displayKey} className={series.displayKey}>
                 <path
-                    key={series.key + "-line"}
+                    key={series.entityDimensionKey + "-line"}
                     strokeLinecap="round"
                     stroke="#ddd"
                     d={pointsToPath(

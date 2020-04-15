@@ -85,7 +85,7 @@ interface ScatterRenderValue {
 }
 
 interface ScatterRenderSeries {
-    key: string
+    entityDimensionKey: EntityDimensionKey
     displayKey: string
     color: string
     size: number
@@ -549,8 +549,8 @@ export class PointsWithLabels extends React.Component<PointsWithLabelsProps> {
         )
 
         for (const series of renderData) {
-            series.isHover = this.hoverKeys.includes(series.key)
-            series.isFocus = this.focusKeys.includes(series.key)
+            series.isHover = this.hoverKeys.includes(series.entityDimensionKey)
+            series.isFocus = this.focusKeys.includes(series.entityDimensionKey)
             series.isForeground = series.isHover || series.isFocus
             if (series.isHover) series.size += 1
         }
@@ -681,7 +681,9 @@ export class PointsWithLabels extends React.Component<PointsWithLabelsProps> {
             if (closestSeries && this.props.onMouseOver) {
                 const datum = find(
                     this.data,
-                    d => d.entityDimensionKey === closestSeries.key
+                    d =>
+                        d.entityDimensionKey ===
+                        closestSeries.entityDimensionKey
                 )
                 if (datum) this.props.onMouseOver(datum)
             }
@@ -707,7 +709,7 @@ export class PointsWithLabels extends React.Component<PointsWithLabelsProps> {
             ? []
             : backgroundGroups.map(group => (
                   <ScatterBackgroundLine
-                      key={group.key}
+                      key={group.entityDimensionKey}
                       group={group}
                       isLayerMode={isLayerMode}
                       isConnected={isConnected}

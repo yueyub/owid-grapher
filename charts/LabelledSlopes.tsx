@@ -136,7 +136,7 @@ class SlopeChartAxis extends React.Component<AxisProps> {
 }
 
 export interface SlopeProps {
-    key: string
+    entityDimensionKey: EntityDimensionKey
     isLayerMode: boolean
     x1: number
     y1: number
@@ -469,7 +469,7 @@ export class LabelledSlopes extends React.Component<LabelledSlopesProps> {
                 leftLabel: leftLabel,
                 rightLabel: rightLabel,
                 labelFontSize: fontSize,
-                key: series.entityDimensionKey,
+                entityDimensionKey: series.entityDimensionKey,
                 isFocused: false,
                 isHovered: false,
                 hasLeftLabel: true,
@@ -536,8 +536,8 @@ export class LabelledSlopes extends React.Component<LabelledSlopesProps> {
 
         slopeData = slopeData.map(slope => {
             return extend({}, slope, {
-                isFocused: includes(focusKeys, slope.key),
-                isHovered: includes(hoverKeys, slope.key)
+                isFocused: includes(focusKeys, slope.entityDimensionKey),
+                isHovered: includes(hoverKeys, slope.entityDimensionKey)
             })
         })
 
@@ -661,7 +661,11 @@ export class LabelledSlopes extends React.Component<LabelledSlopesProps> {
         const { backgroundGroups, isLayerMode } = this
 
         return backgroundGroups.map(slope => (
-            <Slope key={slope.key} isLayerMode={isLayerMode} {...slope} />
+            <Slope
+                entityDimensionKey={slope.entityDimensionKey}
+                isLayerMode={isLayerMode}
+                {...slope}
+            />
         ))
     }
 
@@ -669,7 +673,11 @@ export class LabelledSlopes extends React.Component<LabelledSlopesProps> {
         const { foregroundGroups, isLayerMode } = this
 
         return foregroundGroups.map(slope => (
-            <Slope key={slope.key} isLayerMode={isLayerMode} {...slope} />
+            <Slope
+                entityDimensionKey={slope.entityDimensionKey}
+                isLayerMode={isLayerMode}
+                {...slope}
+            />
         ))
     }
 

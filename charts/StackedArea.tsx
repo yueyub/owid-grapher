@@ -244,7 +244,7 @@ export class StackedArea extends React.Component<{
         const items = transform.stackedData
             .map((d, i) => ({
                 color: d.color,
-                key: d.entityDimensionKey,
+                entityDimensionKey: d.entityDimensionKey,
                 label: this.chart.data.getLabelForKey(d.entityDimensionKey),
                 yValue: midpoints[i]
             }))
