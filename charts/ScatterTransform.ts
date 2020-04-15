@@ -27,6 +27,7 @@ import { formatValue, domainExtent } from "./Util"
 import { ChartTransform } from "./ChartTransform"
 import { Colorizer, Colorable } from "./Colorizer"
 import { Time } from "./TimeBounds"
+import { EntityDimensionKey } from "./EntityDimensionKey"
 
 // Responsible for translating chart configuration into the form
 // of a scatter plot
@@ -136,14 +137,8 @@ export class ScatterTransform extends ChartTransform {
         return intersection(yEntities, xEntities)
     }
 
-    @computed get selectableKeys(): string[] {
-        const { currentData } = this
-
-        const keyData: string[] = []
-        currentData.forEach(series => {
-            keyData.push(series.entityDimensionKey)
-        })
-        return keyData
+    @computed get selectableEntityDimensionKeys(): EntityDimensionKey[] {
+        return this.currentData.map(series => series.entityDimensionKey)
     }
 
     @computed get excludedEntities(): string[] {

@@ -27,13 +27,9 @@ class EntitySelectorMulti extends React.Component<{
     dismissable: boolean = true
 
     @computed get availableEntities(): EntityDimensionInfo[] {
-        const { chart } = this.props
-
-        const selectableKeys = chart.activeTransform.selectableKeys
-        if (selectableKeys !== undefined) {
-            return selectableKeys.map(key => chart.data.lookupKey(key))
-        }
-        return chart.data.availableKeys.map(key => chart.data.lookupKey(key))
+        return this.props.chart.activeTransform.selectableEntityDimensionKeys.map(
+            key => this.props.chart.data.lookupKey(key)
+        )
     }
 
     @computed get selectedEntities() {
