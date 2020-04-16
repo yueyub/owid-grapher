@@ -71,23 +71,30 @@
 }
 
 .DashboardChart {
+    display: flex;
     margin: 0 auto;
     width: 100%;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-
-    .DashboardChartTopBar {
-        width: 100%;
-    }
+    max-width: 1250px;
 
     .DashboardChartSideBar {
         width: 250px;
-        display: inline-block;
+        max-height: 600px;
+        overflow-y: scroll;
     }
-    .DashboardChartFigure {
-        width: 800px;
-        display: inline-block;
+
+    .DashboardChartMainBar {
+        width: calc(100% - 250px);
+
+        .DashboardChartTopBar {
+            width: 100%;
+        }
+
+        .DashboardChartFigure {
+            width: 100%;
+        }
+    }
+
+    .dashboardRadio {
     }
 }
 

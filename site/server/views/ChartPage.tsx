@@ -62,22 +62,22 @@ export const ChartPage = (props: {
     const simpleChartPage = (
         <figure data-grapher-src={`/grapher/${chart.slug}`}></figure>
     )
-    const isDashboardChart = true
     const chartWithDashboardPage = (
         <div className="DashboardChart">
-            <div className="DashboardChartTopBar">
-                <h1>Hello world</h1>
-            </div>
-            <div className="DashboardChartSideBar">
-                <h1>Hello world</h1>
-            </div>
-            <div className="DashboardChartFigure">
-                <figure data-grapher-src={`/grapher/${chart.slug}`}></figure>
+            <div className="DashboardChartSideBar"></div>
+            <div className="DashboardChartMainBar">
+                <div className="DashboardChartTopBar"></div>
+                <div className="DashboardChartFigure">
+                    <figure
+                        data-grapher-src={`/grapher/${chart.slug}`}
+                    ></figure>
+                </div>
             </div>
         </div>
     )
 
-    const chartHolder = isDashboardChart
+    const isCovidDashboardPage = chart.id === 4020
+    const chartHolder = isCovidDashboardPage
         ? chartWithDashboardPage
         : simpleChartPage
 

@@ -27,6 +27,7 @@ import { ChartViewContext } from "./ChartViewContext"
 import { TooltipView } from "./Tooltip"
 import { FullStory } from "site/client/FullStory"
 import { Analytics } from "site/client/Analytics"
+import { renderCoronaDashboard } from "./CovidDashboardControls"
 import * as urlBinding from "charts/UrlBinding"
 
 declare const window: any
@@ -82,6 +83,11 @@ export class ChartView extends React.Component<ChartViewProps> {
                 />,
                 containerNode
             )
+
+            const isCoronaDashboard = chart.props.id === 4020
+            if (isCoronaDashboard) {
+                renderCoronaDashboard(chart)
+            }
         }
 
         render()
