@@ -70,6 +70,27 @@
     }
 }
 
+.DashboardChart {
+    margin: 0 auto;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    .DashboardChartTopBar {
+        width: 100%;
+    }
+
+    .DashboardChartSideBar {
+        width: 250px;
+        display: inline-block;
+    }
+    .DashboardChartFigure {
+        width: 800px;
+        display: inline-block;
+    }
+}
+
 html.iframe .ChartPage {
     background-color: inherit;
 

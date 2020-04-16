@@ -59,6 +59,28 @@ export const ChartPage = (props: {
 
     const variableIds = _.uniq(chart.dimensions.map(d => d.variableId))
 
+    const simpleChartPage = (
+        <figure data-grapher-src={`/grapher/${chart.slug}`}></figure>
+    )
+    const isDashboardChart = true
+    const chartWithDashboardPage = (
+        <div className="DashboardChart">
+            <div className="DashboardChartTopBar">
+                <h1>Hello world</h1>
+            </div>
+            <div className="DashboardChartSideBar">
+                <h1>Hello world</h1>
+            </div>
+            <div className="DashboardChartFigure">
+                <figure data-grapher-src={`/grapher/${chart.slug}`}></figure>
+            </div>
+        </div>
+    )
+
+    const chartHolder = isDashboardChart
+        ? chartWithDashboardPage
+        : simpleChartPage
+
     return (
         <html>
             <Head
@@ -87,9 +109,7 @@ export const ChartPage = (props: {
             <body className="ChartPage">
                 <SiteHeader />
                 <main>
-                    <figure
-                        data-grapher-src={`/grapher/${chart.slug}`}
-                    ></figure>
+                    {chartHolder}
 
                     {post && (
                         <div className="related-research-data">
